@@ -71,9 +71,7 @@ int main(int argc, char *argv[])
 		for (int i = 0; i < WIDTH; i++)
 			FreeImage_SetPixelColor(bitmap, i, j, &color);
 
-	// Pixel rouge
-	color.rgbRed = 255;
-	color.rgbGreen = color.rgbBlue = 0;
+	color.rgbRed = color.rgbGreen = color.rgbBlue = 0; // Pixel noir
 
 	// Données
 
@@ -87,10 +85,15 @@ int main(int argc, char *argv[])
 	r.pos = {300.0f, 300.0f, 0.0f};
 	r.dir = {0.0f, 0.0f, 1.0f};
 
-	// Traitement
+	// Dessine l'image
 
-	if (intersectSphere(r, s, t))
-		printf("t: %.1f\n", t);
+	for (float j = 0.0f; j < HEIGHT; j++)
+		for (float i = 0.0f; i < WIDTH; i++)
+		{
+			r.pos = {i, j, 0.0f};
+			if (intersectSphere(r, s, t))
+				FreeImage_SetPixelColor(bitmap, (int)i, (int)j, &color);
+		}
 
 	// Ecrit l'image
 
