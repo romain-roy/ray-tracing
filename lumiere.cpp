@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
+#include <vector>
 #include "vec3.h"
 #include "FreeImage/FreeImage.h"
 
@@ -11,15 +12,26 @@
 struct Ray
 {
 	Vec3F pos, dir;
+	float t;
 };
 
 struct Sphere
 {
 	Vec3F pos;
 	float rayon;
+	Vec3F couleur;
 };
 
-/* Permute deux variables */
+struct Intersection
+{
+	Sphere sphere;
+	float t;
+};
+
+typedef std::vector<Sphere> Spheres;
+
+typedef std::vector<Intersection> Intersections;
+
 template <typename T>
 void permute(T &a, T &b)
 {
@@ -34,12 +46,10 @@ bool intersectSphere(Ray &ray, Sphere &sphere, float &t)
 	float a = 1.0f; // dot2(ray.dir);
 	float b = 2.0f * dot(ray.dir, pos);
 	float c = dot2(pos) - sphere.rayon * sphere.rayon;
-	// float b = 2.0f * (dot(ray.pos, ray.dir) - dot(sphere.pos, ray.dir));
-	// float c = dot2(ray.pos) + dot2(sphere.pos) - 2.0f * dot(sphere.pos, ray.pos) - sphere.rayon * sphere.rayon;
 	float delta = b * b - 4.0f * a * c;
 	if (delta < 0.0f)
 		return false;
-	else if (delta == 0.0f)
+	if (delta == 0.0f)
 		t = -b / 2.0f * a;
 	else
 	{
@@ -54,10 +64,36 @@ bool intersectSphere(Ray &ray, Sphere &sphere, float &t)
 	return false;
 }
 
+bool intersectScene(Ray &ray, Spheres &spheres, Intersection &intersection)
+{
+	Intersections intersections;
+	float t;
+	for (unsigned int k = 0; k < spheres.size(); k++)
+	{
+		Sphere s = spheres.at(k);
+		if (intersectSphere(ray, s, t))
+		{
+			s.couleur.x *= t;
+			s.couleur.y *= t;
+			s.couleur.z *= t;
+			intersection.sphere = s;
+			intersection.t = t;
+			intersections.push_back(intersection);
+		}
+	}
+	if (!intersections.empty())
+	{
+		intersection = intersections.at(0);
+		for (unsigned int k = 0; k < intersections.size(); k++)
+			if (intersections.at(k).t < intersection.t)
+				intersection = intersections.at(k);
+		return true;
+	}
+	return false;
+}
+
 int main(int argc, char *argv[])
 {
-	// Préparations image
-
 	FreeImage_Initialise();
 	FIBITMAP *bitmap = FreeImage_Allocate(WIDTH, HEIGHT, BPP);
 	RGBQUAD color;
@@ -65,37 +101,47 @@ int main(int argc, char *argv[])
 	if (!bitmap)
 		return 1;
 
-	color.rgbRed = color.rgbGreen = color.rgbBlue = 255; // Pixel blanc
-
-	for (int j = 0; j < HEIGHT; j++) // Remplis l'image de blanc
-		for (int i = 0; i < WIDTH; i++)
-			FreeImage_SetPixelColor(bitmap, i, j, &color);
-
-	color.rgbRed = color.rgbGreen = color.rgbBlue = 0; // Pixel noir
-
 	// Données
 
-	Sphere s;
+	Vec3F bleu, rouge;
 	Ray r;
-	float t;
+	Sphere s1, s2;
+	Spheres spheres;
+	Intersection inter;
 
-	s.pos = {300.0f, 300.0f, 300.0f};
-	s.rayon = 150.0f;
+	bleu = {0.0f, 0.0f, 1.0f};
+	rouge = {1.0f, 0.0f, 0.0f};
+
+	s1.pos = {300.0f, 300.0f, 300.0f};
+	s1.rayon = 150.0f;
+	s1.couleur = bleu;
+
+	s2.pos = {220.0f, 220.0f, 150.0f};
+	s2.rayon = 100.0f;
+	s2.couleur = rouge;
 
 	r.pos = {300.0f, 300.0f, 0.0f};
 	r.dir = {0.0f, 0.0f, 1.0f};
 
-	// Dessine l'image
+	spheres.push_back(s1);
+	spheres.push_back(s2);
+
+	// Traitement
 
 	for (float j = 0.0f; j < HEIGHT; j++)
 		for (float i = 0.0f; i < WIDTH; i++)
 		{
 			r.pos = {i, j, 0.0f};
-			if (intersectSphere(r, s, t))
+			if (intersectScene(r, spheres, inter))
+			{
+				color.rgbRed = inter.sphere.couleur.x;
+				color.rgbGreen = inter.sphere.couleur.y;
+				color.rgbBlue = inter.sphere.couleur.z;
 				FreeImage_SetPixelColor(bitmap, (int)i, (int)j, &color);
+			}
 		}
 
-	// Ecrit l'image
+	// Ecriture de l'image
 
 	if (FreeImage_Save(FIF_PNG, bitmap, "out.png", 0))
 		std::cout << "Image successfully saved!" << std::endl;
