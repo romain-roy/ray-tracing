@@ -1,0 +1,18 @@
+# FreeImage Library
+
+/FreeImage/
+
+# Prerequisites
+*.d
+
+# Object files
+*.o
+
+# Executables
+*.out
+
+# Output images
+*.png
+
+# Visual Studio Code Properties
+/.vscode/
