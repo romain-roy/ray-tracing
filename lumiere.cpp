@@ -44,6 +44,14 @@ void permute(T &a, T &b)
 	b = c;
 }
 
+template <typename T>
+T abs(T a)
+{
+	if (a < 0)
+		return -a;
+	return a;
+}
+
 bool intersectSphere(Ray &ray, Sphere &sphere, float &t)
 {
 	Vec3F pos = ray.pos - sphere.pos;
@@ -77,16 +85,15 @@ bool intersectScene(Ray &ray, Spheres &spheres, Intersection &intersection)
 		Sphere s = spheres.at(k);
 		if (intersectSphere(ray, s, t))
 		{
-			intersection.sphere = s;
 			intersection.t = t;
 			intersection.pos = ray.pos + ray.dir * t;
 			intersection.normale = intersection.pos - s.pos;
 			intersection.normale = intersection.normale / norm(intersection.normale);
-			intersection.intensite = 1 / (t * t) * dot(ray.pos - intersection.pos, intersection.normale);
-			// printf("%1.f\n", intersection.intensite);
-			// s.couleur.x = ;
-			// s.couleur.y = ;
-			// s.couleur.z = ;
+			// intersection.intensite = ray.intensite / (t * t) * dot(ray.pos - intersection.pos, intersection.normale);
+			s.couleur.x = abs(intersection.normale.x * 255);
+			s.couleur.y = abs(intersection.normale.y * 255);
+			s.couleur.z = abs(intersection.normale.z * 255);
+			intersection.sphere = s;
 			intersections.push_back(intersection);
 		}
 	}
@@ -131,7 +138,7 @@ int main(int argc, char *argv[])
 
 	r.pos = {300.0f, 300.0f, 0.0f};
 	r.dir = {0.0f, 0.0f, 1.0f};
-	r.intensite = 100.0f;
+	r.intensite = 1000000.0f;
 
 	spheres.push_back(s1);
 	spheres.push_back(s2);
