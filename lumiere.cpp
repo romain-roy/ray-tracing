@@ -87,10 +87,9 @@ bool intersectScene(Ray &ray, Spheres &spheres, Intersection &intersection)
 			intersection.pos = ray.pos + ray.dir * t;
 			intersection.normale = intersection.pos - s.pos;
 			intersection.normale = intersection.normale / norm(intersection.normale);
-			intersection.intensite = 1.0f; // ray.intensite / (t * t) * dot(ray.pos - intersection.pos, intersection.normale);
-			s.couleur.x = abs(intersection.normale.x * 0.5f + 0.5f) * 255.0f * intersection.intensite;
-			s.couleur.y = abs(intersection.normale.y * 0.5f + 0.5f) * 255.0f * intersection.intensite;
-			s.couleur.z = abs(intersection.normale.z * 0.5f + 0.5f) * 255.0f * intersection.intensite;
+			s.couleur.x = abs(intersection.normale.x * 0.5f + 0.5f) * 255.0f;
+			s.couleur.y = abs(intersection.normale.y * 0.5f + 0.5f) * 255.0f;
+			s.couleur.z = abs(intersection.normale.z * 0.5f + 0.5f) * 255.0f;
 			intersection.sphere = s;
 			intersections.push_back(intersection);
 		}
@@ -117,22 +116,25 @@ int main(int argc, char *argv[])
 
 	// Données
 
-	Vec3F bleu, rouge;
+	Vec3F couleur;
 	Ray r;
-	Sphere s1, s2;
+	Sphere s1, s2, s3;
 	Spheres spheres;
 	Intersection inter;
 
-	bleu = {0.0f, 0.0f, 1.0f};
-	rouge = {1.0f, 0.0f, 0.0f};
+	couleur = {1.0f, 1.0f, 1.0f};
 
 	s1.pos = {500.0f, 500.0f, 500.0f};
 	s1.rayon = 250.0f;
-	s1.couleur = bleu;
+	s1.couleur = couleur;
 
-	s2.pos = {380.0f, 380.0f, 200.0f};
+	s2.pos = {350.0f, 350.0f, 200.0f};
 	s2.rayon = 150.0f;
-	s2.couleur = rouge;
+	s2.couleur = couleur;
+
+	s3.pos = {650.0f, 650.0f, 800.0f};
+	s3.rayon = 150.0f;
+	s3.couleur = couleur;
 
 	r.pos = {500.0f, 500.0f, 0.0f};
 	r.dir = {0.0f, 0.0f, 1.0f};
@@ -140,6 +142,7 @@ int main(int argc, char *argv[])
 
 	spheres.push_back(s1);
 	spheres.push_back(s2);
+	spheres.push_back(s3);
 
 	// Traitement
 

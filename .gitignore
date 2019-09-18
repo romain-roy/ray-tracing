@@ -16,3 +16,6 @@
 
 # Visual Studio Code Properties
 /.vscode/
+
+# Others
+*.lnk
