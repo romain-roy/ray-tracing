@@ -12,7 +12,8 @@
 struct Ray
 {
 	Vec3F pos, dir;
-	float t;
+	float intensite;
+	int depth;
 };
 
 struct Sphere
@@ -25,7 +26,10 @@ struct Sphere
 struct Intersection
 {
 	Sphere sphere;
+	Vec3F pos;
 	float t;
+	Vec3F normale;
+	float intensite;
 };
 
 typedef std::vector<Sphere> Spheres;
@@ -73,11 +77,16 @@ bool intersectScene(Ray &ray, Spheres &spheres, Intersection &intersection)
 		Sphere s = spheres.at(k);
 		if (intersectSphere(ray, s, t))
 		{
-			s.couleur.x *= t;
-			s.couleur.y *= t;
-			s.couleur.z *= t;
 			intersection.sphere = s;
 			intersection.t = t;
+			intersection.pos = ray.pos + ray.dir * t;
+			intersection.normale = intersection.pos - s.pos;
+			intersection.normale = intersection.normale / norm(intersection.normale);
+			intersection.intensite = 1 / (t * t) * dot(ray.pos - intersection.pos, intersection.normale);
+			// printf("%1.f\n", intersection.intensite);
+			// s.couleur.x = ;
+			// s.couleur.y = ;
+			// s.couleur.z = ;
 			intersections.push_back(intersection);
 		}
 	}
@@ -122,6 +131,7 @@ int main(int argc, char *argv[])
 
 	r.pos = {300.0f, 300.0f, 0.0f};
 	r.dir = {0.0f, 0.0f, 1.0f};
+	r.intensite = 100.0f;
 
 	spheres.push_back(s1);
 	spheres.push_back(s2);
