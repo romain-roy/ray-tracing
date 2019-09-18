@@ -5,8 +5,8 @@
 #include "vec3.h"
 #include "FreeImage/FreeImage.h"
 
-#define WIDTH 600
-#define HEIGHT 600
+#define WIDTH 1000
+#define HEIGHT 1000
 #define BPP 24
 
 struct Ray
@@ -59,10 +59,8 @@ bool intersectSphere(Ray &ray, Sphere &sphere, float &t)
 	float b = 2.0f * dot(ray.dir, pos);
 	float c = dot2(pos) - sphere.rayon * sphere.rayon;
 	float delta = b * b - 4.0f * a * c;
-	if (delta < 0.0f)
+	if (delta <= 0.0f)
 		return false;
-	if (delta == 0.0f)
-		t = -b / 2.0f * a;
 	else
 	{
 		float t1 = (-b - sqrtf(delta)) / (2.0f * a);
@@ -89,10 +87,10 @@ bool intersectScene(Ray &ray, Spheres &spheres, Intersection &intersection)
 			intersection.pos = ray.pos + ray.dir * t;
 			intersection.normale = intersection.pos - s.pos;
 			intersection.normale = intersection.normale / norm(intersection.normale);
-			// intersection.intensite = ray.intensite / (t * t) * dot(ray.pos - intersection.pos, intersection.normale);
-			s.couleur.x = abs(intersection.normale.x * 255);
-			s.couleur.y = abs(intersection.normale.y * 255);
-			s.couleur.z = abs(intersection.normale.z * 255);
+			intersection.intensite = 1.0f; // ray.intensite / (t * t) * dot(ray.pos - intersection.pos, intersection.normale);
+			s.couleur.x = abs(intersection.normale.x * 0.5f + 0.5f) * 255.0f * intersection.intensite;
+			s.couleur.y = abs(intersection.normale.y * 0.5f + 0.5f) * 255.0f * intersection.intensite;
+			s.couleur.z = abs(intersection.normale.z * 0.5f + 0.5f) * 255.0f * intersection.intensite;
 			intersection.sphere = s;
 			intersections.push_back(intersection);
 		}
@@ -128,17 +126,17 @@ int main(int argc, char *argv[])
 	bleu = {0.0f, 0.0f, 1.0f};
 	rouge = {1.0f, 0.0f, 0.0f};
 
-	s1.pos = {300.0f, 300.0f, 300.0f};
-	s1.rayon = 150.0f;
+	s1.pos = {500.0f, 500.0f, 500.0f};
+	s1.rayon = 250.0f;
 	s1.couleur = bleu;
 
-	s2.pos = {220.0f, 220.0f, 150.0f};
-	s2.rayon = 100.0f;
+	s2.pos = {380.0f, 380.0f, 200.0f};
+	s2.rayon = 150.0f;
 	s2.couleur = rouge;
 
-	r.pos = {300.0f, 300.0f, 0.0f};
+	r.pos = {500.0f, 500.0f, 0.0f};
 	r.dir = {0.0f, 0.0f, 1.0f};
-	r.intensite = 1000000.0f;
+	r.intensite = 100.0f;
 
 	spheres.push_back(s1);
 	spheres.push_back(s2);
