@@ -54,6 +54,12 @@ float norm(const Vec3<T> &v)
 	return std::sqrt(dot2(v));
 }
 
+template <typename T>
+Vec3<T> normalize(const Vec3<T> &v)
+{
+	return v / norm(v);
+}
+
 using Vec3F = Vec3<float>;
 
 template <typename T>
