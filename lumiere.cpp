@@ -73,12 +73,17 @@ T abs(T a)
 
 bool intersectPlane(Ray &ray, Object &object, Intersection &intersection)
 {
-	float dist = -((dot(ray.origin, object.geom.plane.normale) + object.geom.plane.distance) / dot(ray.origin, object.geom.plane.normale));
-	if (dist >= 0)
+	float dist = -((dot(ray.origin, object.geom.plane.normale) + object.geom.plane.distance) / dot(ray.direction, object.geom.plane.normale));
+	// printf("%.1f \n", dist);
+	if (dist > 0)
 	{
-		intersection.normale = object.geom.plane.normale / norm(object.geom.plane.normale);
+		intersection.normale = normalize(object.geom.plane.normale);
 		intersection.position = ray.origin + ray.direction * dist;
 		intersection.distance = dist;
+		object.color.x = abs(intersection.normale.x * 0.5f + 0.5f) * 255.0f;
+		object.color.y = abs(intersection.normale.y * 0.5f + 0.5f) * 255.0f;
+		object.color.z = abs(intersection.normale.z * 0.5f + 0.5f) * 255.0f;
+		intersection.object = object;
 		return true;
 	}
 	return false;
@@ -104,8 +109,7 @@ bool intersectSphere(Ray &ray, Object &object, Intersection &intersection)
 	if (intersection.distance >= 0.0f)
 	{
 		intersection.position = ray.origin + ray.direction * intersection.distance;
-		intersection.normale = intersection.position - object.geom.sphere.position;
-		intersection.normale = intersection.normale / norm(intersection.normale);
+		intersection.normale = normalize(intersection.position - object.geom.sphere.position);
 		object.color.x = abs(intersection.normale.x * 0.5f + 0.5f) * 255.0f;
 		object.color.y = abs(intersection.normale.y * 0.5f + 0.5f) * 255.0f;
 		object.color.z = abs(intersection.normale.z * 0.5f + 0.5f) * 255.0f;
@@ -179,7 +183,7 @@ int main(int argc, char *argv[])
 	s3.geom.sphere.radius = 150.0f;
 	s3.color = color;
 
-	Vec3F plane1 = {-0.5f, -0.5f, 0.0f};
+	Vec3F plane1 = {0.0f, 0.0f, -1.0f};
 	p1.geom.type = PLANE;
 	p1.geom.plane.normale = normalize(plane1);
 	p1.geom.plane.distance = 1000.0f;
@@ -191,7 +195,7 @@ int main(int argc, char *argv[])
 	objects.push_back(s1);
 	objects.push_back(s2);
 	objects.push_back(s3);
-	// objects.push_back(p1);
+	objects.push_back(p1);
 
 	// Traitement
 
