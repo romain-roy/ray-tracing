@@ -43,9 +43,12 @@ bool intersectSphere(Ray &ray, Object &object, Intersection &intersection)
 	{
 		float t1 = (-b - sqrtf(delta)) / (2.0f * a);
 		float t2 = (-b + sqrtf(delta)) / (2.0f * a);
-		if (t1 > t2)
-			permute(t1, t2);
-		intersection.distance = t1;
+		if (t1 > 0)
+			intersection.distance = t1;
+		else if (t2 > 0)
+			intersection.distance = t2;
+		else
+			return false;
 	}
 	if (intersection.distance >= 0.0f)
 	{
@@ -173,7 +176,7 @@ int main()
 				{
 					Ray ray_to_light;
 					ray_to_light.origin = inter.position;
-					ray_to_light.direction = lights[k].position - inter.position;
+					ray_to_light.direction = normalize(lights[k].position - inter.position);
 					Intersection inter_light;
 					if (intersectScene(ray_to_light, objects, inter_light))
 					{
