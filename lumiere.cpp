@@ -2,79 +2,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <vector>
+#include <algorithm>
 #include "vec3.h"
+#include "utils.h"
+#include "structures.h"
 #include "FreeImage/FreeImage.h"
 
 #define WIDTH 1000
 #define HEIGHT 1000
 #define BPP 24
 
-enum Type
-{
-	SPHERE = 1,
-	PLANE
-};
-
-struct Geometry
-{
-	Type type;
-	union {
-		struct
-		{
-			Vec3F position;
-			float radius;
-		} sphere;
-		struct
-		{
-			Vec3F normale;
-			float distance;
-		} plane;
-	};
-};
-
-struct Object
-{
-	Geometry geom;
-	Vec3F color;
-};
-
-struct Ray
-{
-	Vec3F origin, direction;
-};
-
-struct Intersection
-{
-	Object object;
-	Vec3F position;
-	float distance;
-	Vec3F normale;
-};
-
-typedef std::vector<Object> Objects;
-
-typedef std::vector<Intersection> Intersections;
-
-template <typename T>
-void permute(T &a, T &b)
-{
-	T c = a;
-	a = b;
-	b = c;
-}
-
-template <typename T>
-T abs(T a)
-{
-	if (a < 0)
-		return -a;
-	return a;
-}
-
 bool intersectPlane(Ray &ray, Object &object, Intersection &intersection)
 {
 	float dist = -((dot(ray.origin, object.geom.plane.normale) + object.geom.plane.distance) / dot(ray.direction, object.geom.plane.normale));
-	// printf("%.1f \n", dist);
 	if (dist > 0)
 	{
 		intersection.normale = normalize(object.geom.plane.normale);
@@ -110,9 +50,9 @@ bool intersectSphere(Ray &ray, Object &object, Intersection &intersection)
 	{
 		intersection.position = ray.origin + ray.direction * intersection.distance;
 		intersection.normale = normalize(intersection.position - object.geom.sphere.position);
-		object.color.x = abs(intersection.normale.x * 0.5f + 0.5f) * 255.0f;
-		object.color.y = abs(intersection.normale.y * 0.5f + 0.5f) * 255.0f;
-		object.color.z = abs(intersection.normale.z * 0.5f + 0.5f) * 255.0f;
+		object.color.x = abs(intersection.normale.x /* * 0.5f + 0.5f */) * 255.0f;
+		object.color.y = abs(intersection.normale.y /* * 0.5f + 0.5f */) * 255.0f;
+		object.color.z = abs(intersection.normale.z /* * 0.5f + 0.5f */) * 255.0f;
 		intersection.object = object;
 		return true;
 	}
@@ -149,7 +89,7 @@ bool intersectScene(Ray &ray, Objects &objects, Intersection &intersection)
 	return false;
 }
 
-int main(int argc, char *argv[])
+int main()
 {
 	FreeImage_Initialise();
 	FIBITMAP *bitmap = FreeImage_Allocate(WIDTH, HEIGHT, BPP);
@@ -161,8 +101,8 @@ int main(int argc, char *argv[])
 	// Données
 
 	Vec3F color;
-	Ray r;
-	Object s1, s2, s3, p1;
+	Ray r, light;
+	Object s1, s2, s3, p1, p2, p3;
 	Objects objects;
 	Intersection inter;
 
@@ -189,36 +129,54 @@ int main(int argc, char *argv[])
 	p1.geom.plane.distance = 1000.0f;
 	p1.color = color;
 
-	r.origin = {500.0f, 500.0f, 0.0f};
+	Vec3F plane2 = {-1.0f, 0.0f, -0.1f};
+	p2.geom.type = PLANE;
+	p2.geom.plane.normale = normalize(plane2);
+	p2.geom.plane.distance = 1000.0f;
+	p2.color = color;
+
+	Vec3F plane3 = {1.0f, 0.0f, -0.1f};
+	p3.geom.type = PLANE;
+	p3.geom.plane.normale = normalize(plane3);
+	p3.geom.plane.distance = 0.0f;
+	p3.color = color;
+
 	r.direction = {0.0f, 0.0f, 1.0f};
+
+	light.origin = {500.0f, 0.0f, 500.0f};
+	light.direction = {0.0f, 1.0f, 0.0f};
 
 	objects.push_back(s1);
 	objects.push_back(s2);
 	objects.push_back(s3);
-	objects.push_back(p1);
+	// objects.push_back(p1);
+	// objects.push_back(p2);
+	// objects.push_back(p3);
 
 	// Traitement
 
-	for (float j = 0.0f; j < HEIGHT; j++)
-		for (float i = 0.0f; i < WIDTH; i++)
+	for (int j = 0; j < HEIGHT; j++)
+	{
+		for (int i = 0; i < WIDTH; i++)
 		{
-			r.origin = {i, j, 0.0f};
+			r.origin = {(float)i, (float)j, 0.0f};
 			if (intersectScene(r, objects, inter))
 			{
 				colorPixel.rgbRed = inter.object.color.x;
 				colorPixel.rgbGreen = inter.object.color.y;
 				colorPixel.rgbBlue = inter.object.color.z;
-				FreeImage_SetPixelColor(bitmap, (int)i, (int)j, &colorPixel);
+				FreeImage_SetPixelColor(bitmap, i, j, &colorPixel);
 			}
 		}
+	}
 
 	// Ecriture de l'image
 
 	if (FreeImage_Save(FIF_PNG, bitmap, "out.png", 0))
-		std::cout << "Image successfully saved!" << std::endl;
+		printf("Image successfully saved!\n");
 	FreeImage_DeInitialise();
 
 	return 0;
 }
 
-// Compiler : g++ lumiere.cpp -o lumiere.out -Wall -std=c++11 -lfreeimage
+// Compiler : g++ lumiere.cpp -o lumiere.out -Wall -pedantic -Wextra -ansi -std=c++11 -lfreeimage

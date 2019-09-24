@@ -1,6 +1,7 @@
 # FreeImage Library
 
 /FreeImage/
+/Old/
 
 # Prerequisites
 *.d
