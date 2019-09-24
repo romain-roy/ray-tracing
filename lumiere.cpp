@@ -51,9 +51,9 @@ bool intersectSphere(Ray &ray, Object &object, Intersection &intersection)
 	{
 		intersection.position = ray.origin + ray.direction * intersection.distance;
 		intersection.normale = normalize(intersection.position - object.geom.sphere.position);
-		object.color.x = abs(intersection.normale.x * 0.5f + 0.5f) * 255.0f;
-		object.color.y = abs(intersection.normale.y * 0.5f + 0.5f) * 255.0f;
-		object.color.z = abs(intersection.normale.z * 0.5f + 0.5f) * 255.0f;
+		object.color.x = abs(intersection.normale.x) * 255.0f;
+		object.color.y = abs(intersection.normale.y) * 255.0f;
+		object.color.z = abs(intersection.normale.z) * 255.0f;
 		intersection.object = object;
 		intersection.mat = object.mat;
 		return true;
@@ -163,7 +163,7 @@ int main()
 	l1.color = color;
 	l1.intensity = 1.0f;
 
-	l2.position = {1000.0f, 0.0f, 500.0f};
+	l2.position = {0.0f, 0.0f, 0.0f};
 	l2.color = color;
 	l2.intensity = 1.0f;
 
@@ -196,11 +196,12 @@ int main()
 					Ray ray_to_light;
 					ray_to_light.origin = inter.position;
 					ray_to_light.direction = lights[k].position - inter.position;
-					if (intersectScene(ray_to_light, objects, inter))
+					Intersection inter_light;
+					if (intersectScene(ray_to_light, objects, inter_light))
 					{
-						colorPixel.rgbRed *= 0.8f;
-						colorPixel.rgbGreen *= 0.8f;
-						colorPixel.rgbBlue *= 0.8f;
+						colorPixel.rgbRed *= 0.75f;
+						colorPixel.rgbGreen *= 0.75f;
+						colorPixel.rgbBlue *= 0.75f;
 					}
 				}
 				FreeImage_SetPixelColor(bitmap, i, j, &colorPixel);
