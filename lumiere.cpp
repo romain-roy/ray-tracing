@@ -51,9 +51,6 @@ bool intersectSphere(Ray &ray, Object &object, Intersection &intersection)
 	{
 		intersection.position = ray.origin + ray.direction * intersection.distance;
 		intersection.normale = normalize(intersection.position - object.geom.sphere.position);
-		object.color.x = abs(intersection.normale.x) * 255.0f;
-		object.color.y = abs(intersection.normale.y) * 255.0f;
-		object.color.z = abs(intersection.normale.z) * 255.0f;
 		intersection.object = object;
 		intersection.mat = object.mat;
 		return true;
@@ -106,10 +103,10 @@ int main()
 
 	// Données
 
-	Vec3F color;
+	Vec3F rouge, vert, bleu, blanc;
 	Ray r;
 	Light l1, l2;
-	Object s1, s2, s3, p1, p2, p3;
+	Object s1, s2, s3;
 	Objects objects;
 	Intersection inter;
 	Lights lights;
@@ -119,52 +116,37 @@ int main()
 	mat.IOR = 6.0f;
 	mat.roughness = 0.0181f;
 
-	color = {255.0f, 255.0f, 255.0f};
+	rouge = {255.0f, 0.0f, 0.0f};
+	vert = {0.0f, 255.0f, 0.0f};
+	bleu = {0.0f, 0.0f, 255.0f};
+	blanc = {255.0f, 255.0f, 255.0f};
 
 	s1.geom.type = SPHERE;
 	s1.geom.sphere.position = {500.0f, 500.0f, 500.0f};
 	s1.geom.sphere.radius = 250.0f;
-	s1.color = color;
+	s1.color = vert;
 	s1.mat = mat;
 
 	s2.geom.type = SPHERE;
 	s2.geom.sphere.position = {350.0f, 350.0f, 200.0f};
 	s2.geom.sphere.radius = 150.0f;
-	s2.color = color;
+	s2.color = rouge;
 	s2.mat = mat;
 
 	s3.geom.type = SPHERE;
 	s3.geom.sphere.position = {650.0f, 650.0f, 800.0f};
 	s3.geom.sphere.radius = 150.0f;
-	s3.color = color;
+	s3.color = bleu;
 	s3.mat = mat;
-
-	Vec3F plane1 = {0.0f, 0.0f, -1.0f};
-	p1.geom.type = PLANE;
-	p1.geom.plane.normale = normalize(plane1);
-	p1.geom.plane.distance = 1000.0f;
-	p1.color = color;
-
-	Vec3F plane2 = {-1.0f, 0.0f, -0.1f};
-	p2.geom.type = PLANE;
-	p2.geom.plane.normale = normalize(plane2);
-	p2.geom.plane.distance = 1000.0f;
-	p2.color = color;
-
-	Vec3F plane3 = {1.0f, 0.0f, -0.1f};
-	p3.geom.type = PLANE;
-	p3.geom.plane.normale = normalize(plane3);
-	p3.geom.plane.distance = 0.0f;
-	p3.color = color;
 
 	r.direction = {0.0f, 0.0f, 1.0f};
 
 	l1.position = {0.0f, 1000.0f, 0.0f};
-	l1.color = color;
+	l1.color = blanc;
 	l1.intensity = 1.0f;
 
 	l2.position = {0.0f, 0.0f, 0.0f};
-	l2.color = color;
+	l2.color = blanc;
 	l2.intensity = 1.0f;
 
 	lights.push_back(l1);
@@ -173,10 +155,6 @@ int main()
 	objects.push_back(s1);
 	objects.push_back(s2);
 	objects.push_back(s3);
-
-	// objects.push_back(p1);
-	// objects.push_back(p2);
-	// objects.push_back(p3);
 
 	// Traitement
 
