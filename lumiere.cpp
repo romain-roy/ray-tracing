@@ -104,14 +104,14 @@ int main()
 	l1.color = blanc;
 	l1.intensity = 1.0f;
 
-	l2.position = {0.0f, 0.0f, 0.0f};
+	l2.position = {1000.0f, 1000.0f, 0.0f};
 	l2.color = blanc;
 	l2.intensity = 1.0f;
 
 	Lights lights;
 
 	lights.push_back(l1);
-	// lights.push_back(l2);
+	lights.push_back(l2);
 
 	Spheres spheres;
 
