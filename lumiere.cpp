@@ -1,18 +1,18 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <vector>
-#include <time.h>
+#include <random>
 #include "vec3.h"
 #include "structures.h"
 #include "FreeImage/FreeImage.h"
 
-/* TO DO
-- Fonction traceRayon
-*/
-
 #define WIDTH 1000
 #define HEIGHT 1000
 #define BPP 24
+
+/* TO DO
+	- Perspectives
+	- Fonction traceRay propre
+*/
 
 const float acne = 1e-4;
 
@@ -109,39 +109,20 @@ int main()
 	sw3.color = {46, 204, 113};
 	sw4.color = {205, 92, 92};
 	sw5.color = {247, 220, 111};
-	sw1.radius = sw2.radius = sw3.radius = sw4.radius = sw5.radius = 1000.0f;
-	sw1.position = {500.0f, 500.0f, 1900.0f};
-	sw2.position = {500.0f, 1900.0f, 500.0f};
-	sw3.position = {1900.0f, 500.0f, 500.0f};
-	sw4.position = {-900.0f, 500.0f, 500.0f};
-	sw5.position = {500.0f, -900.0f, 500.0f};
-
-	Light l1, l2, l3, l4, l5;
-
-	l1.position = {150.0f, 850.0f, 0.0f};
-	l2.position = {850.0f, 850.0f, 0.0f};
-	l3.position = {850.0f, 150.0f, 0.0f};
-	l4.position = {150.0f, 150.0f, 0.0f};
-	l5.position = {500.0f, 500.0f, 0.0f};
+	sw1.radius = sw2.radius = sw3.radius = sw4.radius = sw5.radius = 10000.0f;
+	sw1.position = {500.0f, 500.0f, 10970.0f};
+	sw2.position = {500.0f, 10970.0f, 500.0f};
+	sw3.position = {10970.0f, 500.0f, 500.0f};
+	sw4.position = {-9970.0f, 500.0f, 500.0f};
+	sw5.position = {500.0f, -9970.0f, 500.0f};
 
 	Lights lights;
 
-	// lights.push_back(l1);
-	// lights.push_back(l2);
-	// lights.push_back(l3);
-	// lights.push_back(l4);
-	// lights.push_back(l5);
+	int nbLights = 10;
 
-	int nbLights = 100;
-
-	for (int i = 0; i < nbLights; i++)
-	{
-		Light l;
-		l.position.x = 0.0f + rand() % 1000;
-		l.position.y = 0.0f + rand() % 1000;
-		l.position.z = 0.0f;
-		lights.push_back(l);
-	}
+	std::random_device dev;
+	std::mt19937 rng(dev());
+	std::uniform_int_distribution<std::mt19937::result_type> dist1000(0, 1000);
 
 	Spheres spheres;
 
@@ -172,6 +153,15 @@ int main()
 			if (intersectScene(r, spheres, inter))
 			{
 				colorPixel.rgbRed = colorPixel.rgbGreen = colorPixel.rgbBlue = 0.0f;
+				lights.clear();
+				for (int i = 0; i < nbLights; i++)
+				{
+					Light l;
+					l.position.x = dist1000(dev);
+					l.position.y = dist1000(dev);
+					l.position.z = -500.0f;
+					lights.push_back(l);
+				}
 				size_t lightCount = lights.size();
 				for (unsigned int k = 0; k < lightCount; k++)
 				{
@@ -182,7 +172,7 @@ int main()
 					ray_to_light.direction = normalize(lights[k].position - inter.position);
 					float cos = dot(normalize(inter.normale), ray_to_light.direction);
 					if (!intersectScene(ray_to_light, spheres, inter_light))
-						c = c + (inter.sphere.color * cos) / nbLights;
+						c = c + (inter.sphere.color * cos) / (nbLights / 1.5); // Debug
 					colorPixel.rgbRed = clamp(c.x, 0.0f, 255.0f);
 					colorPixel.rgbGreen = clamp(c.y, 0.0f, 255.0f);
 					colorPixel.rgbBlue = clamp(c.z, 0.0f, 255.0f);
@@ -201,4 +191,4 @@ int main()
 	return 0;
 }
 
-// Compiler : g++ lumiere.cpp -o lumiere.out -Wall -pedantic -Wextra -ansi -std=c++11 -lfreeimage
+// Compiler : g++ lumiere.cpp -o lumiere.out -Wall -Wextra -pedantic -ansi -std=c++11 -lfreeimage
