@@ -1,44 +1,14 @@
-enum Type
+struct Sphere
 {
-	SPHERE = 1,
-	PLANE
-};
-
-struct Geometry
-{
-	Type type;
-	union {
-		struct
-		{
-			Vec3F position;
-			float radius;
-		} sphere;
-		struct
-		{
-			Vec3F normale;
-			float distance;
-		} plane;
-	};
-};
-
-struct Material
-{
-	float IOR;
-	float roughness;
-	Vec3F specularColor;
-	Vec3F diffuseColor;
-};
-
-struct Object
-{
-	Geometry geom;
+	Vec3F position;
+	float radius;
 	Vec3F color;
-	Material mat;
 };
 
 struct Ray
 {
-	Vec3F origin, direction;
+	Vec3F origin;
+	Vec3F direction;
 	int depth;
 	float intensity;
 };
@@ -52,14 +22,13 @@ struct Light
 
 struct Intersection
 {
-	Object object;
+	Sphere sphere;
 	Vec3F position;
 	float distance;
 	Vec3F normale;
-	Material mat;
 };
 
-typedef std::vector<Object> Objects;
+typedef std::vector<Sphere> Spheres;
 
 typedef std::vector<Intersection> Intersections;
 
