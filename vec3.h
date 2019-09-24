@@ -6,35 +6,7 @@ struct Vec3
 	T x, y, z;
 };
 
-template <typename T>
-bool operator==(const Vec3<T> &a, const Vec3<T> &b)
-{
-	return a.x == b.x && a.y == b.y && a.z == b.z;
-}
-
-template <typename T>
-Vec3<T> operator+(const Vec3<T> &a, const Vec3<T> &b)
-{
-	return Vec3<T>{a.x + b.x, a.y + b.y, a.z + b.z};
-}
-
-template <typename T>
-Vec3<T> operator*(const Vec3<T> &a, const Vec3<T> &b)
-{
-	return Vec3<T>{a.x * b.x, a.y * b.y, a.z * b.z};
-}
-
-template <typename T>
-Vec3<T> operator-(const Vec3<T> &a, const Vec3<T> &b)
-{
-	return Vec3<T>{a.x - b.x, a.y - b.y, a.z - b.z};
-}
-
-template <typename T>
-Vec3<T> operator/(const Vec3<T> &a, const Vec3<T> &b)
-{
-	return Vec3<T>{a.x / b.x, a.y / b.y, a.z / b.z};
-}
+using Vec3F = Vec3<float>;
 
 template <typename T>
 float dot(const Vec3<T> &a, const Vec3<T> &b)
@@ -60,7 +32,35 @@ Vec3<T> normalize(const Vec3<T> &v)
 	return v / norm(v);
 }
 
-using Vec3F = Vec3<float>;
+template <typename T>
+bool operator==(const Vec3<T> &a, const Vec3<T> &b)
+{
+	return a.x == b.x && a.y == b.y && a.z == b.z;
+}
+
+template <typename T>
+Vec3<T> operator+(const Vec3<T> &a, const Vec3<T> &b)
+{
+	return Vec3<T>{a.x + b.x, a.y + b.y, a.z + b.z};
+}
+
+template <typename T>
+Vec3<T> operator-(const Vec3<T> &a, const Vec3<T> &b)
+{
+	return Vec3<T>{a.x - b.x, a.y - b.y, a.z - b.z};
+}
+
+template <typename T>
+Vec3<T> operator*(const Vec3<T> &a, const Vec3<T> &b)
+{
+	return Vec3<T>{a.x * b.x, a.y * b.y, a.z * b.z};
+}
+
+template <typename T>
+Vec3<T> operator/(const Vec3<T> &a, const Vec3<T> &b)
+{
+	return Vec3<T>{a.x / b.x, a.y / b.y, a.z / b.z};
+}
 
 template <typename T>
 Vec3<T> operator*(const Vec3<T> &a, const float &b)

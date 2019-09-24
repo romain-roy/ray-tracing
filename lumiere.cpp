@@ -1,8 +1,14 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <vector>
+#include <time.h>
 #include "vec3.h"
 #include "structures.h"
 #include "FreeImage/FreeImage.h"
+
+/* TO DO
+- Fonction traceRayon
+*/
 
 #define WIDTH 1000
 #define HEIGHT 1000
@@ -84,7 +90,7 @@ int main()
 	blanc = {255.0f, 255.0f, 255.0f};
 	noir = {0.0f, 0.0f, 0.0f};
 
-	Sphere s1, s2, s3;
+	Sphere s1, s2, s3, sw1, sw2, sw3, sw4, sw5;
 
 	s1.position = {500.0f, 500.0f, 500.0f};
 	s1.radius = 250.0f;
@@ -98,36 +104,56 @@ int main()
 	s3.radius = 150.0f;
 	s3.color = bleu;
 
-	Light l1, l2, l3, l4;
+	sw1.color = {247, 220, 111};
+	sw2.color = {128, 0, 128};
+	sw3.color = {46, 204, 113};
+	sw4.color = {205, 92, 92};
+	sw5.color = {247, 220, 111};
+	sw1.radius = sw2.radius = sw3.radius = sw4.radius = sw5.radius = 1000.0f;
+	sw1.position = {500.0f, 500.0f, 1900.0f};
+	sw2.position = {500.0f, 1900.0f, 500.0f};
+	sw3.position = {1900.0f, 500.0f, 500.0f};
+	sw4.position = {-900.0f, 500.0f, 500.0f};
+	sw5.position = {500.0f, -900.0f, 500.0f};
 
-	l1.position = {0.0f, 1000.0f, 0.0f};
-	l1.color = blanc;
-	l1.intensity = 1.0f;
+	Light l1, l2, l3, l4, l5;
 
-	l2.position = {1000.0f, 1000.0f, 0.0f};
-	l2.color = blanc;
-	l2.intensity = 1.0f;
-
-	l3.position = {1000.0f, 0.0f, 0.0f};
-	l3.color = blanc;
-	l3.intensity = 1.0f;
-
-	l4.position = {0.0f, 0.0f, 0.0f};
-	l4.color = blanc;
-	l4.intensity = 1.0f;
+	l1.position = {150.0f, 850.0f, 0.0f};
+	l2.position = {850.0f, 850.0f, 0.0f};
+	l3.position = {850.0f, 150.0f, 0.0f};
+	l4.position = {150.0f, 150.0f, 0.0f};
+	l5.position = {500.0f, 500.0f, 0.0f};
 
 	Lights lights;
 
 	// lights.push_back(l1);
-	lights.push_back(l2);
+	// lights.push_back(l2);
 	// lights.push_back(l3);
 	// lights.push_back(l4);
+	// lights.push_back(l5);
+
+	int nbLights = 100;
+
+	for (int i = 0; i < nbLights; i++)
+	{
+		Light l;
+		l.position.x = 0.0f + rand() % 1000;
+		l.position.y = 0.0f + rand() % 1000;
+		l.position.z = 0.0f;
+		lights.push_back(l);
+	}
 
 	Spheres spheres;
 
 	spheres.push_back(s1);
 	spheres.push_back(s2);
 	spheres.push_back(s3);
+
+	spheres.push_back(sw1);
+	spheres.push_back(sw2);
+	spheres.push_back(sw3);
+	spheres.push_back(sw4);
+	spheres.push_back(sw5);
 
 	Ray r;
 
@@ -156,7 +182,7 @@ int main()
 					ray_to_light.direction = normalize(lights[k].position - inter.position);
 					float cos = dot(normalize(inter.normale), ray_to_light.direction);
 					if (!intersectScene(ray_to_light, spheres, inter_light))
-						c = c + (inter.sphere.color * cos);
+						c = c + (inter.sphere.color * cos) / nbLights;
 					colorPixel.rgbRed = clamp(c.x, 0.0f, 255.0f);
 					colorPixel.rgbGreen = clamp(c.y, 0.0f, 255.0f);
 					colorPixel.rgbBlue = clamp(c.z, 0.0f, 255.0f);

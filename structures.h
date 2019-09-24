@@ -9,15 +9,11 @@ struct Ray
 {
 	Vec3F origin;
 	Vec3F direction;
-	int depth;
-	float intensity;
 };
 
 struct Light
 {
 	Vec3F position;
-	float intensity;
-	Vec3F color;
 };
 
 struct Intersection
