@@ -8,7 +8,7 @@
 #define HEIGHT 1000
 #define BPP 24
 
-const float acne_eps = 1e-4;
+const float acne = 1e-4;
 
 float clamp(float v, float min, float max)
 {
@@ -140,7 +140,7 @@ int main()
 				{
 					Ray ray_to_light;
 					Intersection inter_light;
-					inter.position = inter.position + (inter.normale * acne_eps);
+					inter.position = inter.position + (inter.normale * acne);
 					ray_to_light.origin = inter.position;
 					ray_to_light.direction = normalize(lights[k].position - inter.position);
 					if (!intersectScene(ray_to_light, spheres, inter_light))
