@@ -8,6 +8,17 @@
 #define HEIGHT 1000
 #define BPP 24
 
+const float acne_eps = 1e-4;
+
+float clamp(float v, float min, float max)
+{
+	if (v > max)
+		v = max;
+	else if (v < min)
+		v = min;
+	return v;
+}
+
 bool intersectSphere(Ray &ray, Sphere &sphere, Intersection &intersection)
 {
 	Vec3F pos = ray.origin - sphere.position;
@@ -47,12 +58,8 @@ bool intersectScene(Ray &ray, Spheres &spheres, Intersection &intersection)
 	{
 		intersection = intersections.at(0);
 		for (unsigned int k = 1; k < intersections.size(); k++)
-		{
 			if (intersections.at(k).distance < intersection.distance)
-			{
 				intersection = intersections.at(k);
-			}
-		}
 		return true;
 	}
 	return false;
@@ -69,12 +76,13 @@ int main()
 
 	// Données
 
-	Vec3F rouge, vert, bleu, blanc;
+	Vec3F rouge, vert, bleu, blanc, noir;
 
 	rouge = {255.0f, 0.0f, 0.0f};
 	vert = {0.0f, 255.0f, 0.0f};
 	bleu = {0.0f, 0.0f, 255.0f};
 	blanc = {255.0f, 255.0f, 255.0f};
+	noir = {0.0f, 0.0f, 0.0f};
 
 	Sphere s1, s2, s3;
 
@@ -103,7 +111,7 @@ int main()
 	Lights lights;
 
 	lights.push_back(l1);
-	lights.push_back(l2);
+	// lights.push_back(l2);
 
 	Spheres spheres;
 
@@ -126,21 +134,24 @@ int main()
 			r.origin = {(float)i, (float)j, 0.0f};
 			if (intersectScene(r, spheres, inter))
 			{
-				colorPixel.rgbRed = inter.sphere.color.x;
-				colorPixel.rgbGreen = inter.sphere.color.y;
-				colorPixel.rgbBlue = inter.sphere.color.z;
+				colorPixel.rgbRed = colorPixel.rgbGreen = colorPixel.rgbBlue = 0.0f;
 				size_t lightCount = lights.size();
 				for (unsigned int k = 0; k < lightCount; k++)
 				{
 					Ray ray_to_light;
+					Intersection inter_light;
+					inter.position = inter.position + (inter.normale * acne_eps);
 					ray_to_light.origin = inter.position;
 					ray_to_light.direction = normalize(lights[k].position - inter.position);
-					Intersection inter_light;
-					if (intersectScene(ray_to_light, spheres, inter_light))
+					if (!intersectScene(ray_to_light, spheres, inter_light))
 					{
-						colorPixel.rgbRed *= 0.75f;
-						colorPixel.rgbGreen *= 0.75f;
-						colorPixel.rgbBlue *= 0.75f;
+						float cos = dot(normalize(inter.normale), ray_to_light.direction);
+						colorPixel.rgbRed += inter.sphere.color.x * cos;
+						colorPixel.rgbGreen += inter.sphere.color.y * cos;
+						colorPixel.rgbBlue += inter.sphere.color.z * cos;
+						colorPixel.rgbRed = clamp(colorPixel.rgbRed, 0.0f, 255.0f);
+						colorPixel.rgbGreen = clamp(colorPixel.rgbGreen, 0.0f, 255.0f);
+						colorPixel.rgbBlue = clamp(colorPixel.rgbBlue, 0.0f, 255.0f);
 					}
 				}
 				FreeImage_SetPixelColor(bitmap, i, j, &colorPixel);
