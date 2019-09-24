@@ -76,7 +76,7 @@ int main()
 
 	// Données
 
-	Vec3F rouge, vert, bleu, blanc, noir;
+	Vec3F rouge, vert, bleu, blanc, noir, c;
 
 	rouge = {255.0f, 0.0f, 0.0f};
 	vert = {0.0f, 255.0f, 0.0f};
@@ -98,7 +98,7 @@ int main()
 	s3.radius = 150.0f;
 	s3.color = bleu;
 
-	Light l1, l2;
+	Light l1, l2, l3, l4;
 
 	l1.position = {0.0f, 1000.0f, 0.0f};
 	l1.color = blanc;
@@ -108,10 +108,20 @@ int main()
 	l2.color = blanc;
 	l2.intensity = 1.0f;
 
+	l3.position = {1000.0f, 0.0f, 0.0f};
+	l3.color = blanc;
+	l3.intensity = 1.0f;
+
+	l4.position = {0.0f, 0.0f, 0.0f};
+	l4.color = blanc;
+	l4.intensity = 1.0f;
+
 	Lights lights;
 
-	lights.push_back(l1);
+	// lights.push_back(l1);
 	lights.push_back(l2);
+	// lights.push_back(l3);
+	// lights.push_back(l4);
 
 	Spheres spheres;
 
@@ -132,6 +142,7 @@ int main()
 		for (int i = 0; i < WIDTH; i++)
 		{
 			r.origin = {(float)i, (float)j, 0.0f};
+			c = {0.0f, 0.0f, 0.0f};
 			if (intersectScene(r, spheres, inter))
 			{
 				colorPixel.rgbRed = colorPixel.rgbGreen = colorPixel.rgbBlue = 0.0f;
@@ -143,16 +154,12 @@ int main()
 					inter.position = inter.position + (inter.normale * acne);
 					ray_to_light.origin = inter.position;
 					ray_to_light.direction = normalize(lights[k].position - inter.position);
+					float cos = dot(normalize(inter.normale), ray_to_light.direction);
 					if (!intersectScene(ray_to_light, spheres, inter_light))
-					{
-						float cos = dot(normalize(inter.normale), ray_to_light.direction);
-						colorPixel.rgbRed += inter.sphere.color.x * cos;
-						colorPixel.rgbGreen += inter.sphere.color.y * cos;
-						colorPixel.rgbBlue += inter.sphere.color.z * cos;
-						colorPixel.rgbRed = clamp(colorPixel.rgbRed, 0.0f, 255.0f);
-						colorPixel.rgbGreen = clamp(colorPixel.rgbGreen, 0.0f, 255.0f);
-						colorPixel.rgbBlue = clamp(colorPixel.rgbBlue, 0.0f, 255.0f);
-					}
+						c = c + (inter.sphere.color * cos);
+					colorPixel.rgbRed = clamp(c.x, 0.0f, 255.0f);
+					colorPixel.rgbGreen = clamp(c.y, 0.0f, 255.0f);
+					colorPixel.rgbBlue = clamp(c.z, 0.0f, 255.0f);
 				}
 				FreeImage_SetPixelColor(bitmap, i, j, &colorPixel);
 			}
