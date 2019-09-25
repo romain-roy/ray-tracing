@@ -9,11 +9,6 @@
 #define HEIGHT 1000
 #define BPP 24
 
-/* TO DO
-	- Perspectives
-	- Fonction traceRay propre
-*/
-
 const float acne = 1e-4;
 
 float clamp(float v, float min, float max)
@@ -40,7 +35,7 @@ bool intersectSphere(Ray &ray, Sphere &sphere, Intersection &intersection)
 		float t2 = (-b + sqrtf(delta)) / (2.0f * a);
 		intersection.distance = t1 > 0.0f ? t1 : t2 > 0.0f ? t2 : -1.0f;
 	}
-	if (intersection.distance >= 0.0f)
+	if (intersection.distance > 0.0f)
 	{
 		intersection.position = ray.origin + ray.direction * intersection.distance;
 		intersection.normale = normalize(intersection.position - sphere.position);
@@ -118,7 +113,7 @@ int main()
 
 	Lights lights;
 
-	int nbLights = 10;
+	int nbLights = 50;
 
 	std::random_device dev;
 	std::mt19937 rng(dev());
@@ -142,6 +137,8 @@ int main()
 
 	Intersection inter;
 
+	Vec3F camera = {500.0f, 500.0f, -2000.0f};
+
 	// Traitement
 
 	for (int j = 0; j < HEIGHT; j++)
@@ -149,6 +146,7 @@ int main()
 		for (int i = 0; i < WIDTH; i++)
 		{
 			r.origin = {(float)i, (float)j, 0.0f};
+			r.direction = normalize(r.origin - camera);
 			c = {0.0f, 0.0f, 0.0f};
 			if (intersectScene(r, spheres, inter))
 			{
@@ -158,8 +156,8 @@ int main()
 				{
 					Light l;
 					l.position.x = dist1000(dev);
-					l.position.y = dist1000(dev);
-					l.position.z = -500.0f;
+					l.position.y = 950;
+					l.position.z = -2000.0f;
 					lights.push_back(l);
 				}
 				size_t lightCount = lights.size();
@@ -172,7 +170,7 @@ int main()
 					ray_to_light.direction = normalize(lights[k].position - inter.position);
 					float cos = dot(normalize(inter.normale), ray_to_light.direction);
 					if (!intersectScene(ray_to_light, spheres, inter_light))
-						c = c + (inter.sphere.color * cos) / (nbLights / 1.5); // Debug
+						c = c + (inter.sphere.color * cos) / nbLights;
 					colorPixel.rgbRed = clamp(c.x, 0.0f, 255.0f);
 					colorPixel.rgbGreen = clamp(c.y, 0.0f, 255.0f);
 					colorPixel.rgbBlue = clamp(c.z, 0.0f, 255.0f);
