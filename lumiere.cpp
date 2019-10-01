@@ -89,10 +89,10 @@ int main()
 	Sphere s1, s2, s3;
 	s1.position = {725.0f, 600.0f, 600.0f};
 	s1.radius = 150.0f;
-	s1.color = vert;
+	s1.color = rouge;
 	s2.position = {275.0f, 500.0f, 400.0f};
 	s2.radius = 200.0f;
-	s2.color = rouge;
+	s2.color = vert;
 	s3.position = {500.0f, 200.0f, 200.0f};
 	s3.radius = 50.0f;
 	s3.color = bleu;
@@ -101,11 +101,9 @@ int main()
 	spheres.push_back(s3);
 
 	Sphere sw1, sw2, sw3, sw4, sw5;
-	sw1.color = {247, 220, 111};
-	sw2.color = {128, 0, 128};
-	sw3.color = {46, 204, 113};
-	sw4.color = {205, 92, 92};
-	sw5.color = {247, 220, 111};
+	sw1.color = sw2.color = sw5.color = blanc;
+	sw3.color = vert;
+	sw4.color = rouge;
 	sw1.radius = sw2.radius = sw3.radius = sw4.radius = sw5.radius = 10000.0f;
 	sw1.position = {500.0f, 500.0f, sw1.radius + 1000.0f};
 	sw2.position = {500.0f, sw2.radius + 1000.0f, 500.0f};
@@ -118,14 +116,19 @@ int main()
 	spheres.push_back(sw4);
 	spheres.push_back(sw5);
 
-	Light light;
-	light.position = {500.0f, 900.0f, 500.0f};
+	Light l1, l2, li;
+	l1.position = {450.0f, 850.0f, 450.0f};
+	l2.position = {450.0f, 450.0f, -50.0f};
 	int nb_lights = 10;
 	int light_size = 100;
 
+	Lights lights;
+	lights.push_back(l1);
+	lights.push_back(l2);
+
 	std::random_device rand;
 	std::mt19937 rng(rand());
-	std::uniform_int_distribution<std::mt19937::result_type> alea(500 - light_size / 2, 500 + light_size / 2);
+	std::uniform_int_distribution<std::mt19937::result_type> alea(0, light_size);
 
 	Ray r;
 	r.direction = {0.0f, 0.0f, 1.0f};
@@ -137,6 +140,8 @@ int main()
 
 	// Traitement
 
+	unsigned int lightsCount = lights.size();
+
 	for (int j = 0; j < HEIGHT; j++)
 	{
 		for (int i = 0; i < WIDTH; i++)
@@ -146,16 +151,20 @@ int main()
 			c = {0.0f, 0.0f, 0.0f};
 			if (intersectScene(r, spheres, inter_sphere))
 			{
-				for (int k = 0; k < nb_lights; k++)
+				for (unsigned int l = 0; l < lightsCount; l++)
 				{
-					light.position.x = alea(rand);
-					light.position.z = alea(rand) - 100.0f;
-					inter_sphere.position = inter_sphere.position + (inter_sphere.normale * acne);
-					ray_to_light.origin = inter_sphere.position;
-					ray_to_light.direction = normalize(light.position - inter_sphere.position);
-					float cos = dot(inter_sphere.normale, ray_to_light.direction);
-					if (!intersectScene(ray_to_light, spheres, inter_light) || inter_light.position.z < 0 || inter_light.position.z > 1000 || inter_light.position.x < 0 || inter_light.position.y > 1000 || inter_light.position.x > 1000 || inter_light.position.y < 0)
-						c = c + (inter_sphere.sphere.color * cos) / nb_lights;
+					for (int k = 0; k < nb_lights; k++)
+					{
+						li.position.x = lights[l].position.x + alea(rand);
+						li.position.y = lights[l].position.y + alea(rand);
+						li.position.z = lights[l].position.z + alea(rand);
+						inter_sphere.position = inter_sphere.position + (inter_sphere.normale * acne);
+						ray_to_light.origin = inter_sphere.position;
+						ray_to_light.direction = normalize(li.position - inter_sphere.position);
+						float cos = dot(inter_sphere.normale, ray_to_light.direction);
+						if (!intersectScene(ray_to_light, spheres, inter_light) || inter_light.position.z < 0 || inter_light.position.z > 1000 || inter_light.position.x < 0 || inter_light.position.y > 1000 || inter_light.position.x > 1000 || inter_light.position.y < 0)
+							c = c + (inter_sphere.sphere.color * cos) / nb_lights / lightsCount;
+					}
 				}
 			}
 			colorPixel.rgbRed = clamp(c.x, 0.0f, 255.0f);
