@@ -9,7 +9,7 @@
 #define HEIGHT 1000
 #define BPP 24
 
-const float acne = 1e-4;
+const float acne = 1e-2; /* 1e-4 */
 
 float clamp(float v, float min, float max)
 {
@@ -39,7 +39,6 @@ bool intersectSphere(Ray &ray, Sphere &sphere, Intersection &intersection)
 	{
 		intersection.position = ray.origin + ray.direction * intersection.distance;
 		intersection.normale = normalize(intersection.position - sphere.position);
-		intersection.position = intersection.position + (intersection.normale * acne);
 		intersection.sphere = sphere;
 		return true;
 	}
@@ -88,7 +87,7 @@ int main()
 	Spheres spheres;
 
 	Sphere s1, s2;
-	s1.position = {700.0f, 160.0f, 600.0f};
+	s1.position = {700.0f, 160.0f, 500.0f};
 	s1.radius = 150.0f;
 	s1.color = vert;
 	s2.position = {300.0f, 160.0f, 300.0f};
@@ -116,7 +115,7 @@ int main()
 	spheres.push_back(sw5);
 
 	Light light;
-	light.position = {500.0f, 500.0f, -1000.0f};
+	light.position = {500.0f, 1000.0f, 200.0f};
 	int nb_lights = 5;
 	int light_size = 300;
 
@@ -147,10 +146,11 @@ int main()
 				{
 					light.position.x = alea(rand);
 					light.position.y = alea(rand);
+					inter_sphere.position = inter_sphere.position + (inter_sphere.normale * acne);
 					ray_to_light.origin = inter_sphere.position;
 					ray_to_light.direction = normalize(light.position - inter_sphere.position);
 					float cos = dot(inter_sphere.normale, ray_to_light.direction);
-					if (!intersectScene(ray_to_light, spheres, inter_light))
+					if (!intersectScene(ray_to_light, spheres, inter_light) || inter_light.position.z < 0 || inter_light.position.z > 1000 || inter_light.position.x < 0 || inter_light.position.y > 1000 || inter_light.position.x > 1000 || inter_light.position.y < 0)
 						c = c + (inter_sphere.sphere.color * cos) / nb_lights;
 				}
 			}
