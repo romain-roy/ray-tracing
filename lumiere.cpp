@@ -75,7 +75,7 @@ int main()
 	if (!bitmap)
 		return 1;
 
-	// Données
+	// Création des objets
 
 	Vec3F rouge, vert, bleu, blanc, noir, c;
 
@@ -85,45 +85,45 @@ int main()
 	blanc = {255.0f, 255.0f, 255.0f};
 	noir = {0.0f, 0.0f, 0.0f};
 
-	Sphere s1, s2, s3, sw1, sw2, sw3, sw4, sw5;
+	Sphere s1, s2;
 
-	s1.position = {500.0f, 500.0f, 500.0f};
-	s1.radius = 250.0f;
+	s1.position = {700.0f, 160.0f, 600.0f};
+	s1.radius = 150.0f;
 	s1.color = vert;
 
-	s2.position = {350.0f, 350.0f, 200.0f};
+	s2.position = {300.0f, 160.0f, 300.0f};
 	s2.radius = 150.0f;
 	s2.color = rouge;
 
-	s3.position = {650.0f, 650.0f, 800.0f};
-	s3.radius = 150.0f;
-	s3.color = bleu;
+	Sphere sw1, sw2, sw3, sw4, sw5;
 
 	sw1.color = {247, 220, 111};
 	sw2.color = {128, 0, 128};
 	sw3.color = {46, 204, 113};
 	sw4.color = {205, 92, 92};
 	sw5.color = {247, 220, 111};
+
 	sw1.radius = sw2.radius = sw3.radius = sw4.radius = sw5.radius = 10000.0f;
-	sw1.position = {500.0f, 500.0f, 10970.0f};
-	sw2.position = {500.0f, 10970.0f, 500.0f};
-	sw3.position = {10970.0f, 500.0f, 500.0f};
-	sw4.position = {-9970.0f, 500.0f, 500.0f};
-	sw5.position = {500.0f, -9970.0f, 500.0f};
 
-	Lights lights;
+	sw1.position = {500.0f, 500.0f, sw1.radius + 1000.0f};
+	sw2.position = {500.0f, sw2.radius + 1000.0f, 500.0f};
+	sw3.position = {sw3.radius + 1000.0f, 500.0f, 500.0f};
+	sw4.position = {-sw4.radius, 500.0f, 500.0f};
+	sw5.position = {500.0f, -sw5.radius, 500.0f};
 
-	int nbLights = 50;
+	Light light;
 
-	std::random_device dev;
-	std::mt19937 rng(dev());
-	std::uniform_int_distribution<std::mt19937::result_type> dist1000(0, 1000);
+	int nb_lights = 100;
+	int light_size = 300;
+
+	std::random_device rand;
+	std::mt19937 rng(rand());
+	std::uniform_int_distribution<std::mt19937::result_type> alea(500 - light_size / 2, 500 + light_size / 2);
 
 	Spheres spheres;
 
 	spheres.push_back(s1);
 	spheres.push_back(s2);
-	spheres.push_back(s3);
 
 	spheres.push_back(sw1);
 	spheres.push_back(sw2);
@@ -135,9 +135,9 @@ int main()
 
 	r.direction = {0.0f, 0.0f, 1.0f};
 
-	Intersection inter;
+	Vec3F camera = {500.0f, 500.0f, -1250.0f};
 
-	Vec3F camera = {500.0f, 500.0f, -2000.0f};
+	Intersection inter;
 
 	// Traitement
 
@@ -151,26 +151,20 @@ int main()
 			if (intersectScene(r, spheres, inter))
 			{
 				colorPixel.rgbRed = colorPixel.rgbGreen = colorPixel.rgbBlue = 0.0f;
-				lights.clear();
-				for (int i = 0; i < nbLights; i++)
-				{
-					Light l;
-					l.position.x = dist1000(dev);
-					l.position.y = 950;
-					l.position.z = -2000.0f;
-					lights.push_back(l);
-				}
-				size_t lightCount = lights.size();
-				for (unsigned int k = 0; k < lightCount; k++)
+				#pragma omp parallel for
+				for (int k = 0; k < nb_lights; k++)
 				{
 					Ray ray_to_light;
 					Intersection inter_light;
+					light.position.x = alea(rand);
+					light.position.y = alea(rand);
+					light.position.z = -1000.0f;
 					inter.position = inter.position + (inter.normale * acne);
 					ray_to_light.origin = inter.position;
-					ray_to_light.direction = normalize(lights[k].position - inter.position);
+					ray_to_light.direction = normalize(light.position - inter.position);
 					float cos = dot(normalize(inter.normale), ray_to_light.direction);
 					if (!intersectScene(ray_to_light, spheres, inter_light))
-						c = c + (inter.sphere.color * cos) / nbLights;
+						c = c + (inter.sphere.color * cos) / nb_lights;
 					colorPixel.rgbRed = clamp(c.x, 0.0f, 255.0f);
 					colorPixel.rgbGreen = clamp(c.y, 0.0f, 255.0f);
 					colorPixel.rgbBlue = clamp(c.z, 0.0f, 255.0f);
@@ -188,5 +182,3 @@ int main()
 
 	return 0;
 }
-
-// Compiler : g++ lumiere.cpp -o lumiere.out -Wall -Wextra -pedantic -ansi -std=c++11 -lfreeimage
