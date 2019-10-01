@@ -10,7 +10,6 @@ struct Sphere
 {
 	Vec3F position;
 	float radius;
-	Vec3F color;
 	Material material;
 };
 
@@ -23,6 +22,7 @@ struct Ray
 struct Light
 {
 	Vec3F position;
+	Vec3F color;
 };
 
 struct Intersection

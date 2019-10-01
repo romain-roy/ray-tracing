@@ -73,3 +73,9 @@ Vec3<T> operator/(const Vec3<T> &a, const float &b)
 {
 	return Vec3<T>{a.x / b, a.y / b, a.z / b};
 }
+
+template <typename T>
+void print(const Vec3<T> &v)
+{
+	printf("%.1f %.1f %.1f\n", v.x, v.y, v.z);
+}

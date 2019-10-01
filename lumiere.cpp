@@ -9,7 +9,7 @@
 #define HEIGHT 1000
 #define BPP 24
 
-const float acne = 1e-2; /* 1e-4 */
+const float acne = 1e-4;
 
 float clamp(float v, float min, float max)
 {
@@ -20,10 +20,10 @@ float clamp(float v, float min, float max)
 	return v;
 }
 
-bool intersectSphere(Ray &ray, Sphere &sphere, Intersection &intersection)
+bool intersect_sphere(Ray &ray, Sphere &sphere, Intersection &intersection)
 {
 	Vec3F pos = ray.origin - sphere.position;
-	float a = 1.0f; // dot2(ray.direction);
+	float a = 1.0f; /* dot2(ray.direction); */
 	float b = 2.0f * dot(ray.direction, pos);
 	float c = dot2(pos) - sphere.radius * sphere.radius;
 	float delta = b * b - 4.0f * a * c;
@@ -45,14 +45,14 @@ bool intersectSphere(Ray &ray, Sphere &sphere, Intersection &intersection)
 	return false;
 }
 
-bool intersectScene(Ray &ray, Spheres &spheres, Intersection &intersection)
+bool intersect_scene(Ray &ray, Spheres &spheres, Intersection &intersection)
 {
 	Intersections intersections;
 	size_t sphereCount = spheres.size();
 	for (unsigned int k = 0; k < sphereCount; k++)
 	{
 		Sphere sphere = spheres.at(k);
-		if (intersectSphere(ray, sphere, intersection))
+		if (intersect_sphere(ray, sphere, intersection))
 			intersections.push_back(intersection);
 	}
 	if (!intersections.empty())
@@ -92,11 +92,6 @@ float RDM_Fresnel(float LdotH, float extIOR, float intIOR)
 	return 0.5f * (Rs + Rp);
 }
 
-float RDM_chiplus(float c)
-{
-	return (c > 0.f) ? 1.f : 0.f;
-}
-
 float RDM_G1(float DdotH, float DdotN, float alpha)
 {
 	float tan = sqrtf(1.0f - DdotN * DdotN) / DdotN;
@@ -134,7 +129,7 @@ Vec3F RDM_bsdf(float LdotH, float NdotH, float VdotH, float LdotN, float VdotN, 
 	return RDM_bsdf_d(m) + RDM_bsdf_s(LdotH, NdotH, VdotH, LdotN, VdotN, m);
 }
 
-Vec3F shade(Vec3F &n, Vec3F v, Vec3F &l, Vec3F &lc, Material &mat)
+Vec3F shade(Vec3F &n, Vec3F &v, Vec3F &l, Vec3F &lc, Material &mat)
 {
 	Vec3F h = normalize(v + l);
 	float LdotH = dot(l, h);
@@ -143,10 +138,11 @@ Vec3F shade(Vec3F &n, Vec3F v, Vec3F &l, Vec3F &lc, Material &mat)
 	float LdotN = dot(l, n);
 	float VdotN = dot(v, n);
 	Vec3F bsdf = RDM_bsdf(LdotH, NdotH, VdotH, LdotH, VdotN, mat);
-	return lc * bsdf * LdotN;
+	Vec3F s = lc * bsdf * LdotN;
+	return s;
 }
 
-int main()
+int render_image(Spheres &spheres, Lights &lights)
 {
 	FreeImage_Initialise();
 	FIBITMAP *bitmap = FreeImage_Allocate(WIDTH, HEIGHT, BPP);
@@ -155,139 +151,58 @@ int main()
 	if (!bitmap)
 		return 1;
 
-	// Création des objets
-
-	Vec3F rouge, vert, bleu, blanc, noir, c;
-	rouge = {255.0f, 0.0f, 0.0f};
-	vert = {0.0f, 255.0f, 0.0f};
-	bleu = {0.0f, 0.0f, 255.0f};
-	blanc = {255.0f, 255.0f, 255.0f};
-	noir = {0.0f, 0.0f, 0.0f};
-
-	Material m1, m2, m3, mw1, mw2, mw3, mw4, mw5;
-
-	m1.diffuseColor = {0.26, 0.036, 0.014};
-	m1.specularColor = {1.0, 0.852, 1.172};
-	m1.IOR = 1.0771;
-	m1.roughness = 0.0589;
-
-	m2.diffuseColor = {0.016, 0.143, 0.04};
-	m2.specularColor = {1.0, 0.739, 0.721};
-	m2.IOR = 1.1051;
-	m2.roughness = 0.0567;
-
-	m3.diffuseColor = {0.012, 0.036, 0.212};
-	m3.specularColor = {1.0, 0.748, 0.718};
-	m3.IOR = 1.1051;
-	m3.roughness = 0.0568;
-
-	mw5.diffuseColor = {0.286, 0.235, 0.128};
-	mw5.specularColor = {1.0, 0.766, 0.762};
-	mw5.IOR = 1.1022;
-	mw5.roughness = 0.0579;
-
-	mw1 = mw2 = mw5;
-	mw3 = m2;
-	mw4 = m1;
-
-	Spheres spheres;
-
-	Sphere s1, s2, s3;
-	s1.position = {725.0f, 600.0f, 600.0f};
-	s1.radius = 150.0f;
-	s1.color = rouge;
-	s1.material = m1;
-	s2.position = {275.0f, 500.0f, 400.0f};
-	s2.radius = 200.0f;
-	s2.color = vert;
-	s2.material = m2;
-	s3.position = {500.0f, 200.0f, 200.0f};
-	s3.radius = 50.0f;
-	s3.color = bleu;
-	s3.material = m3;
-	spheres.push_back(s1);
-	spheres.push_back(s2);
-	spheres.push_back(s3);
-
-	Sphere sw1, sw2, sw3, sw4, sw5;
-	sw1.color = sw2.color = sw5.color = blanc;
-	sw3.color = vert;
-	sw4.color = rouge;
-	sw1.material = mw1;
-	sw2.material = mw2;
-	sw3.material = mw3;
-	sw4.material = mw4;
-	sw5.material = mw5;
-	sw1.radius = sw2.radius = sw3.radius = sw4.radius = sw5.radius = 10000.0f;
-	sw1.position = {500.0f, 500.0f, sw1.radius + 1000.0f};
-	sw2.position = {500.0f, sw2.radius + 1000.0f, 500.0f};
-	sw3.position = {sw3.radius + 1000.0f, 500.0f, 500.0f};
-	sw4.position = {-sw4.radius, 500.0f, 500.0f};
-	sw5.position = {500.0f, -sw5.radius, 500.0f};
-	spheres.push_back(sw1);
-	spheres.push_back(sw2);
-	spheres.push_back(sw3);
-	spheres.push_back(sw4);
-	spheres.push_back(sw5);
-
-	Light l1, l2, li;
-	l1.position = {450.0f, 850.0f, 450.0f};
-	l2.position = {450.0f, 450.0f, -50.0f};
-	int nb_lights = 10;
 	int light_size = 100;
+	int nb_lights = 100;
 
-	Lights lights;
-	lights.push_back(l1);
-	lights.push_back(l2);
-
-	std::random_device rand;
-	std::mt19937 rng(rand());
-	std::uniform_int_distribution<std::mt19937::result_type> alea(0, light_size);
-
-	Ray r;
-	r.direction = {0.0f, 0.0f, 1.0f};
+	/* Generateur aleatoire */
 
 	Vec3F camera = {500.0f, 500.0f, -1250.0f};
-
-	Intersection inter_sphere, inter_light;
-	Ray ray_to_light;
 
 	// Traitement
 
 	unsigned int lightsCount = lights.size();
 
+	std::random_device device;
+	std::mt19937 rng(device());
+	std::uniform_int_distribution<std::mt19937::result_type> aleatoire(0, light_size);
+
 	for (int j = 0; j < HEIGHT; j++)
 	{
+		#pragma omp parallel for
 		for (int i = 0; i < WIDTH; i++)
 		{
+			Ray r;
 			r.origin = {(float)i, (float)j, 0.0f};
 			r.direction = normalize(r.origin - camera);
-			c = {0.0f, 0.0f, 0.0f};
-			if (intersectScene(r, spheres, inter_sphere))
+			Vec3F c = {0.0f, 0.0f, 0.0f};
+			Intersection inter_sphere;
+			if (intersect_scene(r, spheres, inter_sphere))
 			{
 				for (unsigned int l = 0; l < lightsCount; l++)
 				{
 					for (int k = 0; k < nb_lights; k++)
 					{
-						li.position.x = lights[l].position.x + alea(rand);
-						li.position.y = lights[l].position.y + alea(rand);
-						li.position.z = lights[l].position.z + alea(rand);
+						Light light;
+						light.position.x = lights[l].position.x + aleatoire(device);
+						light.position.y = lights[l].position.y + aleatoire(device);
+						light.position.z = lights[l].position.z + aleatoire(device);
+						light.color = lights[l].color;
 						inter_sphere.position = inter_sphere.position + (inter_sphere.normale * acne);
+						Ray ray_to_light;
 						ray_to_light.origin = inter_sphere.position;
-						ray_to_light.direction = normalize(li.position - inter_sphere.position);
-						// float cos = dot(inter_sphere.normale, ray_to_light.direction);
-						if (!intersectScene(ray_to_light, spheres, inter_light) || inter_light.distance > inter_sphere.distance)
+						ray_to_light.direction = normalize(light.position - inter_sphere.position);
+						Intersection inter_light;
+						if (!intersect_scene(ray_to_light, spheres, inter_light) || inter_light.distance > inter_sphere.distance)
 						{
-							Vec3F ls = normalize(li.position - inter_sphere.position);
-							c = c + shade(inter_sphere.normale, r.direction * -1.0f, ls, blanc, inter_sphere.sphere.material);
-							// c = c + (inter_sphere.sphere.color * cos) / nb_lights / lightsCount;
+							Vec3F inv = r.direction * -1.0f;
+							c = c + (shade(inter_sphere.normale, inv, ray_to_light.direction, light.color, inter_sphere.sphere.material) / ((float)nb_lights * (float)lightsCount) * 18.0f);
 						}
 					}
 				}
 			}
-			colorPixel.rgbRed = clamp(c.x, 0.0f, 255.0f);
-			colorPixel.rgbGreen = clamp(c.y, 0.0f, 255.0f);
-			colorPixel.rgbBlue = clamp(c.z, 0.0f, 255.0f);
+			colorPixel.rgbRed = (int)clamp(c.x, 0.0f, 255.0f);
+			colorPixel.rgbGreen = (int)clamp(c.y, 0.0f, 255.0f);
+			colorPixel.rgbBlue = (int)clamp(c.z, 0.0f, 255.0f);
 			FreeImage_SetPixelColor(bitmap, i, j, &colorPixel);
 		}
 	}
@@ -299,4 +214,101 @@ int main()
 	FreeImage_DeInitialise();
 
 	return 0;
+}
+
+void init_scene(Spheres &spheres, Lights &lights)
+{
+	/* Matériaux */
+
+	Material mat_rouge, mat_vert, mat_bleu, mat_blanc;
+
+	mat_rouge.diffuseColor = {0.26f, 0.036f, 0.014f};
+	mat_rouge.specularColor = {1.0f, 0.852f, 1.172f};
+	mat_rouge.IOR = 1.0771f;
+	mat_rouge.roughness = 0.0589f;
+
+	mat_vert.diffuseColor = {0.016f, 0.143f, 0.04f};
+	mat_vert.specularColor = {1.0f, 0.739f, 0.721f};
+	mat_vert.IOR = 1.1051f;
+	mat_vert.roughness = 0.0567f;
+
+	mat_bleu.diffuseColor = {0.012f, 0.036f, 0.212f};
+	mat_bleu.specularColor = {1.0f, 0.748f, 0.718f};
+	mat_bleu.IOR = 1.1051f;
+	mat_bleu.roughness = 0.0568f;
+
+	mat_blanc.diffuseColor = {0.250f, 0.250f, 0.250f};
+	mat_blanc.specularColor = {1.0f, 0.766f, 0.762f};
+	mat_blanc.IOR = 1.1022f;
+	mat_blanc.roughness = 0.0579f;
+
+	/* Spheres */
+
+	Sphere sphere_rouge, sphere_verte, sphere_bleue;
+
+	sphere_rouge.position = {725.0f, 600.0f, 600.0f};
+	sphere_rouge.radius = 150.0f;
+	sphere_rouge.material = mat_rouge;
+
+	sphere_verte.position = {275.0f, 500.0f, 400.0f};
+	sphere_verte.radius = 200.0f;
+	sphere_verte.material = mat_vert;
+
+	sphere_bleue.position = {500.0f, 200.0f, 200.0f};
+	sphere_bleue.radius = 50.0f;
+	sphere_bleue.material = mat_bleu;
+
+	spheres.push_back(sphere_rouge);
+	spheres.push_back(sphere_verte);
+	spheres.push_back(sphere_bleue);
+
+	/* Murs */
+
+	Sphere sw1, sw2, sw3, sw4, sw5;
+
+	sw1.material = mat_blanc;
+	sw2.material = mat_blanc;
+	sw3.material = mat_vert;
+	sw4.material = mat_rouge;
+	sw5.material = mat_blanc;
+
+	sw1.radius = sw2.radius = sw3.radius = sw4.radius = sw5.radius = 10000.0f;
+
+	sw1.position = {500.0f, 500.0f, sw1.radius + 1000.0f};
+	sw2.position = {500.0f, sw2.radius + 1000.0f, 500.0f};
+	sw3.position = {sw3.radius + 1000.0f, 500.0f, 500.0f};
+	sw4.position = {-sw4.radius, 500.0f, 500.0f};
+	sw5.position = {500.0f, -sw5.radius, 500.0f};
+
+	spheres.push_back(sw1);
+	spheres.push_back(sw2);
+	spheres.push_back(sw3);
+	spheres.push_back(sw4);
+	spheres.push_back(sw5);
+
+	/* Lumières */
+
+	Light light1, light2;
+
+	light1.position = {450.0f, 850.0f, 450.0f};
+	light1.color = {255.0f, 255.0f, 255.0f};
+
+	light2.position = {450.0f, 450.0f, -50.0f};
+	light2.color = {255.0f, 255.0f, 255.0f};
+
+	lights.push_back(light1);
+	lights.push_back(light2);
+}
+
+int main()
+{
+	Spheres spheres;
+	Lights lights;
+
+	init_scene(spheres, lights);
+
+	if (render_image(spheres, lights))
+		return 0;
+
+	return 1;
 }
