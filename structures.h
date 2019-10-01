@@ -17,6 +17,7 @@ struct Ray
 {
 	Vec3F origin;
 	Vec3F direction;
+	int depth;
 };
 
 struct Light

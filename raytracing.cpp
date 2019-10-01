@@ -145,7 +145,8 @@ Vec3F shade(Vec3F &n, Vec3F &v, Vec3F &l, Vec3F &lc, Material &mat)
 Vec3F trace_ray(Spheres &spheres, Lights &lights, Ray &ray)
 {
 	int light_size = 100;
-	int nb_lights = 100;
+	int nb_lights = 10;
+	int max_depth = 1;
 
 	/* Générateur de nombre aléatoire */
 
@@ -154,7 +155,8 @@ Vec3F trace_ray(Spheres &spheres, Lights &lights, Ray &ray)
 	std::uniform_int_distribution<std::mt19937::result_type> aleatoire(0, light_size);
 
 	unsigned int lightsCount = lights.size();
-	Vec3F color = {0.0f, 0.0f, 0.0f};
+	Vec3F color, retour;
+	color = retour = {0.0f, 0.0f, 0.0f};
 	Intersection intersection;
 	if (intersect_scene(ray, spheres, intersection))
 	{
@@ -180,7 +182,23 @@ Vec3F trace_ray(Spheres &spheres, Lights &lights, Ray &ray)
 			}
 		}
 	}
-	return color;
+	if (ray.depth < max_depth)
+	{
+		Ray ray_reflect;
+		Vec3F dir_ray_reflect = reflect(ray.direction, intersection.normale);
+		dir_ray_reflect = normalize(dir_ray_reflect);
+		ray_reflect.origin = intersection.position + dir_ray_reflect * acne;
+		ray_reflect.direction = dir_ray_reflect;
+		ray_reflect.depth = ray.depth + 1;
+		color = trace_ray(spheres, lights, ray_reflect);
+		retour = color + intersection.sphere.material.specularColor * RDM_Fresnel(dot(ray_reflect.direction, intersection.normale), 1.0f, intersection.sphere.material.IOR) * color;
+	}
+	else
+	{
+		retour = color;
+	}
+
+	return retour;
 }
 
 int render_image(Spheres &spheres, Lights &lights)
@@ -200,12 +218,13 @@ int render_image(Spheres &spheres, Lights &lights)
 
 	for (int j = 0; j < HEIGHT; j++)
 	{
-		#pragma omp parallel for
+#pragma omp parallel for
 		for (int i = 0; i < WIDTH; i++)
 		{
 			Ray ray;
 			ray.origin = {(float)i, (float)j, 0.0f};
 			ray.direction = normalize(ray.origin - camera);
+			ray.depth = 0;
 
 			Vec3F color = trace_ray(spheres, lights, ray);
 

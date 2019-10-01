@@ -74,6 +74,11 @@ Vec3<T> operator/(const Vec3<T> &a, const float &b)
 	return Vec3<T>{a.x / b, a.y / b, a.z / b};
 }
 
+Vec3F reflect(const Vec3F &I, const Vec3F &N)
+{
+	return I - N * 2.0f * dot(N, I);
+}
+
 template <typename T>
 void print(const Vec3<T> &v)
 {
