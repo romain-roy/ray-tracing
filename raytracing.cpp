@@ -145,7 +145,7 @@ Vec3F shade(Vec3F &n, Vec3F &v, Vec3F &l, Vec3F &lc, Material &mat)
 Vec3F trace_ray(Spheres &spheres, Lights &lights, Ray &ray)
 {
 	int light_size = 100;
-	int nb_lights = 10;
+	int nb_lights = 100;
 	int max_depth = 1;
 
 	/* Générateur de nombre aléatoire */
@@ -190,8 +190,8 @@ Vec3F trace_ray(Spheres &spheres, Lights &lights, Ray &ray)
 		ray_reflect.origin = intersection.position + dir_ray_reflect * acne;
 		ray_reflect.direction = dir_ray_reflect;
 		ray_reflect.depth = ray.depth + 1;
-		color = trace_ray(spheres, lights, ray_reflect);
-		retour = color + intersection.sphere.material.specularColor * RDM_Fresnel(dot(ray_reflect.direction, intersection.normale), 1.0f, intersection.sphere.material.IOR) * color;
+		Vec3F color_reflect = trace_ray(spheres, lights, ray_reflect);
+		retour = color + intersection.sphere.material.specularColor * RDM_Fresnel(dot(ray_reflect.direction, intersection.normale), 1.0f, intersection.sphere.material.IOR) * color_reflect;
 	}
 	else
 	{
