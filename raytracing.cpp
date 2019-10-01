@@ -145,8 +145,8 @@ Vec3F shade(Vec3F &n, Vec3F &v, Vec3F &l, Vec3F &lc, Material &mat)
 Vec3F trace_ray(Spheres &spheres, Lights &lights, Ray &ray)
 {
 	int light_size = 100;
-	int nb_lights = 100;
-	int max_depth = 1;
+	int nb_lights = 200;
+	int max_depth = 5;
 
 	/* Générateur de nombre aléatoire */
 
@@ -181,21 +181,25 @@ Vec3F trace_ray(Spheres &spheres, Lights &lights, Ray &ray)
 				}
 			}
 		}
-	}
-	if (ray.depth < max_depth)
-	{
-		Ray ray_reflect;
-		Vec3F dir_ray_reflect = reflect(ray.direction, intersection.normale);
-		dir_ray_reflect = normalize(dir_ray_reflect);
-		ray_reflect.origin = intersection.position + dir_ray_reflect * acne;
-		ray_reflect.direction = dir_ray_reflect;
-		ray_reflect.depth = ray.depth + 1;
-		Vec3F color_reflect = trace_ray(spheres, lights, ray_reflect);
-		retour = color + intersection.sphere.material.specularColor * RDM_Fresnel(dot(ray_reflect.direction, intersection.normale), 1.0f, intersection.sphere.material.IOR) * color_reflect;
+		if (ray.depth < max_depth)
+		{
+			Ray ray_reflect;
+			Vec3F dir_ray_reflect = reflect(ray.direction, intersection.normale);
+			dir_ray_reflect = normalize(dir_ray_reflect);
+			ray_reflect.origin = intersection.position + dir_ray_reflect * acne;
+			ray_reflect.direction = dir_ray_reflect;
+			ray_reflect.depth = ray.depth + 1;
+			Vec3F color_reflect = trace_ray(spheres, lights, ray_reflect);
+			retour = color + intersection.sphere.material.specularColor * RDM_Fresnel(dot(ray_reflect.direction, intersection.normale), 1.0f, intersection.sphere.material.IOR) * color_reflect;
+		}
+		else
+		{
+			retour = color;
+		}
 	}
 	else
 	{
-		retour = color;
+		return {0.0f, 0.0f, 0.0f};
 	}
 
 	return retour;
@@ -218,7 +222,7 @@ int render_image(Spheres &spheres, Lights &lights)
 
 	for (int j = 0; j < HEIGHT; j++)
 	{
-#pragma omp parallel for
+		#pragma omp parallel for
 		for (int i = 0; i < WIDTH; i++)
 		{
 			Ray ray;
@@ -248,7 +252,7 @@ void init_scene(Spheres &spheres, Lights &lights)
 {
 	/* Matériaux */
 
-	Material mat_rouge, mat_vert, mat_bleu, mat_blanc;
+	Material mat_rouge, mat_vert, mat_bleu, mat_blanc, mat_nickel;
 
 	mat_rouge.diffuseColor = {0.26f, 0.036f, 0.014f};
 	mat_rouge.specularColor = {1.0f, 0.852f, 1.172f};
@@ -270,6 +274,11 @@ void init_scene(Spheres &spheres, Lights &lights)
 	mat_blanc.IOR = 1.1022f;
 	mat_blanc.roughness = 0.0579f;
 
+	mat_nickel.diffuseColor = {0.014f, 0.012f, 0.012f};
+	mat_nickel.specularColor = {1.0f, 0.882f, 0.786f};
+	mat_nickel.IOR = 2.4449f;
+	mat_nickel.roughness = 0.0681f;
+
 	/* Sphères */
 
 	Sphere sphere_rouge, sphere_verte, sphere_bleue;
@@ -280,7 +289,7 @@ void init_scene(Spheres &spheres, Lights &lights)
 
 	sphere_verte.position = {275.0f, 500.0f, 400.0f};
 	sphere_verte.radius = 200.0f;
-	sphere_verte.material = mat_vert;
+	sphere_verte.material = mat_nickel;
 
 	sphere_bleue.position = {500.0f, 200.0f, 200.0f};
 	sphere_bleue.radius = 50.0f;
