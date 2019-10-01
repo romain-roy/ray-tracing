@@ -1,8 +1,17 @@
+struct Material
+{
+	float IOR;
+	float roughness;
+	Vec3F specularColor;
+	Vec3F diffuseColor;
+};
+
 struct Sphere
 {
 	Vec3F position;
 	float radius;
 	Vec3F color;
+	Material material;
 };
 
 struct Ray

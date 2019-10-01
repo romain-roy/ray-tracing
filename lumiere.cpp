@@ -66,6 +66,86 @@ bool intersectScene(Ray &ray, Spheres &spheres, Intersection &intersection)
 	return false;
 }
 
+float RDM_Beckmann(float NdotH, float alpha)
+{
+	if (NdotH > 0.0f)
+	{
+		float cos2 = NdotH * NdotH;
+		float tan2 = (1.0f - cos2) / cos2;
+		float cos4 = cos2 * cos2;
+		float alpha2 = alpha * alpha;
+		return expf(-tan2 / alpha2) / ((float)M_PI * alpha2 * cos4);
+	}
+	return 0.0f;
+}
+
+float RDM_Fresnel(float LdotH, float extIOR, float intIOR)
+{
+	float cosI = LdotH;
+	float ratioIOR = extIOR / intIOR;
+	float sinT2 = ratioIOR * ratioIOR * (1.0f - (cosI * cosI));
+	if (sinT2 > 1.0f)
+		return 1.0f;
+	float cosT = sqrtf(1.0f - sinT2);
+	float Rs = powf(cosI * extIOR - cosT * intIOR, 2) / powf(cosI * extIOR + cosT * intIOR, 2);
+	float Rp = powf(cosT * extIOR - cosI * intIOR, 2) / powf(cosT * extIOR + cosI * intIOR, 2);
+	return 0.5f * (Rs + Rp);
+}
+
+float RDM_chiplus(float c)
+{
+	return (c > 0.f) ? 1.f : 0.f;
+}
+
+float RDM_G1(float DdotH, float DdotN, float alpha)
+{
+	float tan = sqrtf(1.0f - DdotN * DdotN) / DdotN;
+	float b = 1.0f / (alpha * tan);
+	float k = DdotH / DdotN;
+	if (k > 0.0f)
+		if (b < 1.6f)
+			return (3.535f * b + 2.181f * b * b) / (1.0f + 2.276f * b + 2.577f * b * b);
+		else
+			return 1.0f;
+	else
+		return 0.0f;
+}
+
+float RDM_Smith(float LdotH, float LdotN, float VdotH, float VdotN, float alpha)
+{
+	return RDM_G1(LdotH, LdotN, alpha) * RDM_G1(VdotH, VdotN, alpha);
+}
+
+Vec3F RDM_bsdf_s(float LdotH, float NdotH, float VdotH, float LdotN, float VdotN, Material &m)
+{
+	float d = RDM_Beckmann(NdotH, m.roughness);
+	float f = RDM_Fresnel(LdotH, 1, m.IOR);
+	float g = RDM_Smith(LdotH, LdotN, VdotH, VdotN, m.roughness);
+	return m.specularColor * d * f * g / (4.0f * LdotN * VdotN);
+}
+
+Vec3F RDM_bsdf_d(Material &m)
+{
+	return m.diffuseColor / (float)M_PI;
+}
+
+Vec3F RDM_bsdf(float LdotH, float NdotH, float VdotH, float LdotN, float VdotN, Material &m)
+{
+	return RDM_bsdf_d(m) + RDM_bsdf_s(LdotH, NdotH, VdotH, LdotN, VdotN, m);
+}
+
+Vec3F shade(Vec3F &n, Vec3F v, Vec3F &l, Vec3F &lc, Material &mat)
+{
+	Vec3F h = normalize(v + l);
+	float LdotH = dot(l, h);
+	float VdotH = dot(v, h);
+	float NdotH = dot(n, h);
+	float LdotN = dot(l, n);
+	float VdotN = dot(v, n);
+	Vec3F bsdf = RDM_bsdf(LdotH, NdotH, VdotH, LdotH, VdotN, mat);
+	return lc * bsdf * LdotN;
+}
+
 int main()
 {
 	FreeImage_Initialise();
@@ -84,18 +164,47 @@ int main()
 	blanc = {255.0f, 255.0f, 255.0f};
 	noir = {0.0f, 0.0f, 0.0f};
 
+	Material m1, m2, m3, mw1, mw2, mw3, mw4, mw5;
+
+	m1.diffuseColor = {0.26, 0.036, 0.014};
+	m1.specularColor = {1.0, 0.852, 1.172};
+	m1.IOR = 1.0771;
+	m1.roughness = 0.0589;
+
+	m2.diffuseColor = {0.016, 0.143, 0.04};
+	m2.specularColor = {1.0, 0.739, 0.721};
+	m2.IOR = 1.1051;
+	m2.roughness = 0.0567;
+
+	m3.diffuseColor = {0.012, 0.036, 0.212};
+	m3.specularColor = {1.0, 0.748, 0.718};
+	m3.IOR = 1.1051;
+	m3.roughness = 0.0568;
+
+	mw5.diffuseColor = {0.286, 0.235, 0.128};
+	mw5.specularColor = {1.0, 0.766, 0.762};
+	mw5.IOR = 1.1022;
+	mw5.roughness = 0.0579;
+
+	mw1 = mw2 = mw5;
+	mw3 = m2;
+	mw4 = m1;
+
 	Spheres spheres;
 
 	Sphere s1, s2, s3;
 	s1.position = {725.0f, 600.0f, 600.0f};
 	s1.radius = 150.0f;
 	s1.color = rouge;
+	s1.material = m1;
 	s2.position = {275.0f, 500.0f, 400.0f};
 	s2.radius = 200.0f;
 	s2.color = vert;
+	s2.material = m2;
 	s3.position = {500.0f, 200.0f, 200.0f};
 	s3.radius = 50.0f;
 	s3.color = bleu;
+	s3.material = m3;
 	spheres.push_back(s1);
 	spheres.push_back(s2);
 	spheres.push_back(s3);
@@ -104,6 +213,11 @@ int main()
 	sw1.color = sw2.color = sw5.color = blanc;
 	sw3.color = vert;
 	sw4.color = rouge;
+	sw1.material = mw1;
+	sw2.material = mw2;
+	sw3.material = mw3;
+	sw4.material = mw4;
+	sw5.material = mw5;
 	sw1.radius = sw2.radius = sw3.radius = sw4.radius = sw5.radius = 10000.0f;
 	sw1.position = {500.0f, 500.0f, sw1.radius + 1000.0f};
 	sw2.position = {500.0f, sw2.radius + 1000.0f, 500.0f};
@@ -161,9 +275,13 @@ int main()
 						inter_sphere.position = inter_sphere.position + (inter_sphere.normale * acne);
 						ray_to_light.origin = inter_sphere.position;
 						ray_to_light.direction = normalize(li.position - inter_sphere.position);
-						float cos = dot(inter_sphere.normale, ray_to_light.direction);
+						// float cos = dot(inter_sphere.normale, ray_to_light.direction);
 						if (!intersectScene(ray_to_light, spheres, inter_light) || inter_light.distance > inter_sphere.distance)
-							c = c + (inter_sphere.sphere.color * cos) / nb_lights / lightsCount;
+						{
+							Vec3F ls = normalize(li.position - inter_sphere.position);
+							c = c + shade(inter_sphere.normale, r.direction * -1.0f, ls, blanc, inter_sphere.sphere.material);
+							// c = c + (inter_sphere.sphere.color * cos) / nb_lights / lightsCount;
+						}
 					}
 				}
 			}
