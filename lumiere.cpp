@@ -39,6 +39,7 @@ bool intersectSphere(Ray &ray, Sphere &sphere, Intersection &intersection)
 	{
 		intersection.position = ray.origin + ray.direction * intersection.distance;
 		intersection.normale = normalize(intersection.position - sphere.position);
+		intersection.position = intersection.position + (intersection.normale * acne);
 		intersection.sphere = sphere;
 		return true;
 	}
@@ -78,66 +79,58 @@ int main()
 	// Création des objets
 
 	Vec3F rouge, vert, bleu, blanc, noir, c;
-
 	rouge = {255.0f, 0.0f, 0.0f};
 	vert = {0.0f, 255.0f, 0.0f};
 	bleu = {0.0f, 0.0f, 255.0f};
 	blanc = {255.0f, 255.0f, 255.0f};
 	noir = {0.0f, 0.0f, 0.0f};
 
-	Sphere s1, s2;
+	Spheres spheres;
 
+	Sphere s1, s2;
 	s1.position = {700.0f, 160.0f, 600.0f};
 	s1.radius = 150.0f;
 	s1.color = vert;
-
 	s2.position = {300.0f, 160.0f, 300.0f};
 	s2.radius = 150.0f;
 	s2.color = rouge;
+	spheres.push_back(s1);
+	spheres.push_back(s2);
 
 	Sphere sw1, sw2, sw3, sw4, sw5;
-
 	sw1.color = {247, 220, 111};
 	sw2.color = {128, 0, 128};
 	sw3.color = {46, 204, 113};
 	sw4.color = {205, 92, 92};
 	sw5.color = {247, 220, 111};
-
 	sw1.radius = sw2.radius = sw3.radius = sw4.radius = sw5.radius = 10000.0f;
-
 	sw1.position = {500.0f, 500.0f, sw1.radius + 1000.0f};
 	sw2.position = {500.0f, sw2.radius + 1000.0f, 500.0f};
 	sw3.position = {sw3.radius + 1000.0f, 500.0f, 500.0f};
 	sw4.position = {-sw4.radius, 500.0f, 500.0f};
 	sw5.position = {500.0f, -sw5.radius, 500.0f};
-
-	Light light;
-
-	int nb_lights = 100;
-	int light_size = 300;
-
-	std::random_device rand;
-	std::mt19937 rng(rand());
-	std::uniform_int_distribution<std::mt19937::result_type> alea(500 - light_size / 2, 500 + light_size / 2);
-
-	Spheres spheres;
-
-	spheres.push_back(s1);
-	spheres.push_back(s2);
-
 	spheres.push_back(sw1);
 	spheres.push_back(sw2);
 	spheres.push_back(sw3);
 	spheres.push_back(sw4);
 	spheres.push_back(sw5);
 
-	Ray r;
+	Light light;
+	light.position = {500.0f, 500.0f, -1000.0f};
+	int nb_lights = 5;
+	int light_size = 300;
 
+	std::random_device rand;
+	std::mt19937 rng(rand());
+	std::uniform_int_distribution<std::mt19937::result_type> alea(500 - light_size / 2, 500 + light_size / 2);
+
+	Ray r;
 	r.direction = {0.0f, 0.0f, 1.0f};
 
 	Vec3F camera = {500.0f, 500.0f, -1250.0f};
 
-	Intersection inter;
+	Intersection inter_sphere, inter_light;
+	Ray ray_to_light;
 
 	// Traitement
 
@@ -148,29 +141,23 @@ int main()
 			r.origin = {(float)i, (float)j, 0.0f};
 			r.direction = normalize(r.origin - camera);
 			c = {0.0f, 0.0f, 0.0f};
-			if (intersectScene(r, spheres, inter))
+			if (intersectScene(r, spheres, inter_sphere))
 			{
-				colorPixel.rgbRed = colorPixel.rgbGreen = colorPixel.rgbBlue = 0.0f;
-				#pragma omp parallel for
 				for (int k = 0; k < nb_lights; k++)
 				{
-					Ray ray_to_light;
-					Intersection inter_light;
 					light.position.x = alea(rand);
 					light.position.y = alea(rand);
-					light.position.z = -1000.0f;
-					inter.position = inter.position + (inter.normale * acne);
-					ray_to_light.origin = inter.position;
-					ray_to_light.direction = normalize(light.position - inter.position);
-					float cos = dot(normalize(inter.normale), ray_to_light.direction);
+					ray_to_light.origin = inter_sphere.position;
+					ray_to_light.direction = normalize(light.position - inter_sphere.position);
+					float cos = dot(inter_sphere.normale, ray_to_light.direction);
 					if (!intersectScene(ray_to_light, spheres, inter_light))
-						c = c + (inter.sphere.color * cos) / nb_lights;
-					colorPixel.rgbRed = clamp(c.x, 0.0f, 255.0f);
-					colorPixel.rgbGreen = clamp(c.y, 0.0f, 255.0f);
-					colorPixel.rgbBlue = clamp(c.z, 0.0f, 255.0f);
+						c = c + (inter_sphere.sphere.color * cos) / nb_lights;
 				}
-				FreeImage_SetPixelColor(bitmap, i, j, &colorPixel);
 			}
+			colorPixel.rgbRed = clamp(c.x, 0.0f, 255.0f);
+			colorPixel.rgbGreen = clamp(c.y, 0.0f, 255.0f);
+			colorPixel.rgbBlue = clamp(c.z, 0.0f, 255.0f);
+			FreeImage_SetPixelColor(bitmap, i, j, &colorPixel);
 		}
 	}
 
