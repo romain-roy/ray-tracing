@@ -162,7 +162,7 @@ int main()
 						ray_to_light.origin = inter_sphere.position;
 						ray_to_light.direction = normalize(li.position - inter_sphere.position);
 						float cos = dot(inter_sphere.normale, ray_to_light.direction);
-						if (!intersectScene(ray_to_light, spheres, inter_light) || inter_light.position.z < 0 || inter_light.position.z > 1000 || inter_light.position.x < 0 || inter_light.position.y > 1000 || inter_light.position.x > 1000 || inter_light.position.y < 0)
+						if (!intersectScene(ray_to_light, spheres, inter_light) || inter_light.distance > inter_sphere.distance)
 							c = c + (inter_sphere.sphere.color * cos) / nb_lights / lightsCount;
 					}
 				}
