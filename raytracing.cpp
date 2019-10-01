@@ -142,8 +142,51 @@ Vec3F shade(Vec3F &n, Vec3F &v, Vec3F &l, Vec3F &lc, Material &mat)
 	return s;
 }
 
+Vec3F trace_ray(Spheres &spheres, Lights &lights, Ray &ray)
+{
+	int light_size = 100;
+	int nb_lights = 100;
+
+	/* Générateur de nombre aléatoire */
+
+	std::random_device device;
+	std::mt19937 rng(device());
+	std::uniform_int_distribution<std::mt19937::result_type> aleatoire(0, light_size);
+
+	unsigned int lightsCount = lights.size();
+	Vec3F color = {0.0f, 0.0f, 0.0f};
+	Intersection intersection;
+	if (intersect_scene(ray, spheres, intersection))
+	{
+		for (unsigned int l = 0; l < lightsCount; l++)
+		{
+			for (int k = 0; k < nb_lights; k++)
+			{
+				Light light;
+				light.position.x = lights[l].position.x + aleatoire(device);
+				light.position.y = lights[l].position.y + aleatoire(device);
+				light.position.z = lights[l].position.z + aleatoire(device);
+				light.color = lights[l].color;
+				intersection.position = intersection.position + (intersection.normale * acne);
+				Ray ray_shadow;
+				ray_shadow.origin = intersection.position;
+				ray_shadow.direction = normalize(light.position - intersection.position);
+				Intersection inter_shadow;
+				if (!intersect_scene(ray_shadow, spheres, inter_shadow) || inter_shadow.distance > intersection.distance)
+				{
+					Vec3F inv = ray.direction * -1.0f;
+					color = color + (shade(intersection.normale, inv, ray_shadow.direction, light.color, intersection.sphere.material) / ((float)nb_lights * (float)lightsCount) * 18.0f);
+				}
+			}
+		}
+	}
+	return color;
+}
+
 int render_image(Spheres &spheres, Lights &lights)
 {
+	/* Initialisation de l'image */
+
 	FreeImage_Initialise();
 	FIBITMAP *bitmap = FreeImage_Allocate(WIDTH, HEIGHT, BPP);
 	RGBQUAD colorPixel;
@@ -151,63 +194,29 @@ int render_image(Spheres &spheres, Lights &lights)
 	if (!bitmap)
 		return 1;
 
-	int light_size = 100;
-	int nb_lights = 100;
-
-	/* Generateur aleatoire */
+	/* Traitement */
 
 	Vec3F camera = {500.0f, 500.0f, -1250.0f};
-
-	// Traitement
-
-	unsigned int lightsCount = lights.size();
-
-	std::random_device device;
-	std::mt19937 rng(device());
-	std::uniform_int_distribution<std::mt19937::result_type> aleatoire(0, light_size);
 
 	for (int j = 0; j < HEIGHT; j++)
 	{
 		#pragma omp parallel for
 		for (int i = 0; i < WIDTH; i++)
 		{
-			Ray r;
-			r.origin = {(float)i, (float)j, 0.0f};
-			r.direction = normalize(r.origin - camera);
-			Vec3F c = {0.0f, 0.0f, 0.0f};
-			Intersection inter_sphere;
-			if (intersect_scene(r, spheres, inter_sphere))
-			{
-				for (unsigned int l = 0; l < lightsCount; l++)
-				{
-					for (int k = 0; k < nb_lights; k++)
-					{
-						Light light;
-						light.position.x = lights[l].position.x + aleatoire(device);
-						light.position.y = lights[l].position.y + aleatoire(device);
-						light.position.z = lights[l].position.z + aleatoire(device);
-						light.color = lights[l].color;
-						inter_sphere.position = inter_sphere.position + (inter_sphere.normale * acne);
-						Ray ray_to_light;
-						ray_to_light.origin = inter_sphere.position;
-						ray_to_light.direction = normalize(light.position - inter_sphere.position);
-						Intersection inter_light;
-						if (!intersect_scene(ray_to_light, spheres, inter_light) || inter_light.distance > inter_sphere.distance)
-						{
-							Vec3F inv = r.direction * -1.0f;
-							c = c + (shade(inter_sphere.normale, inv, ray_to_light.direction, light.color, inter_sphere.sphere.material) / ((float)nb_lights * (float)lightsCount) * 18.0f);
-						}
-					}
-				}
-			}
-			colorPixel.rgbRed = (int)clamp(c.x, 0.0f, 255.0f);
-			colorPixel.rgbGreen = (int)clamp(c.y, 0.0f, 255.0f);
-			colorPixel.rgbBlue = (int)clamp(c.z, 0.0f, 255.0f);
+			Ray ray;
+			ray.origin = {(float)i, (float)j, 0.0f};
+			ray.direction = normalize(ray.origin - camera);
+
+			Vec3F color = trace_ray(spheres, lights, ray);
+
+			colorPixel.rgbRed = (int)clamp(color.x, 0.0f, 255.0f);
+			colorPixel.rgbGreen = (int)clamp(color.y, 0.0f, 255.0f);
+			colorPixel.rgbBlue = (int)clamp(color.z, 0.0f, 255.0f);
 			FreeImage_SetPixelColor(bitmap, i, j, &colorPixel);
 		}
 	}
 
-	// Ecriture de l'image
+	/* Ecriture de l'image */
 
 	if (FreeImage_Save(FIF_PNG, bitmap, "out.png", 0))
 		printf("Image successfully saved!\n");
@@ -242,7 +251,7 @@ void init_scene(Spheres &spheres, Lights &lights)
 	mat_blanc.IOR = 1.1022f;
 	mat_blanc.roughness = 0.0579f;
 
-	/* Spheres */
+	/* Sphères */
 
 	Sphere sphere_rouge, sphere_verte, sphere_bleue;
 
