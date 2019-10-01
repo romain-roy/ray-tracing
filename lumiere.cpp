@@ -86,15 +86,19 @@ int main()
 
 	Spheres spheres;
 
-	Sphere s1, s2;
-	s1.position = {700.0f, 160.0f, 500.0f};
+	Sphere s1, s2, s3;
+	s1.position = {725.0f, 600.0f, 600.0f};
 	s1.radius = 150.0f;
 	s1.color = vert;
-	s2.position = {300.0f, 160.0f, 300.0f};
-	s2.radius = 150.0f;
+	s2.position = {275.0f, 500.0f, 400.0f};
+	s2.radius = 200.0f;
 	s2.color = rouge;
+	s3.position = {500.0f, 200.0f, 200.0f};
+	s3.radius = 50.0f;
+	s3.color = bleu;
 	spheres.push_back(s1);
 	spheres.push_back(s2);
+	spheres.push_back(s3);
 
 	Sphere sw1, sw2, sw3, sw4, sw5;
 	sw1.color = {247, 220, 111};
@@ -115,9 +119,9 @@ int main()
 	spheres.push_back(sw5);
 
 	Light light;
-	light.position = {500.0f, 1000.0f, 200.0f};
-	int nb_lights = 5;
-	int light_size = 300;
+	light.position = {500.0f, 900.0f, 500.0f};
+	int nb_lights = 10;
+	int light_size = 100;
 
 	std::random_device rand;
 	std::mt19937 rng(rand());
@@ -145,7 +149,7 @@ int main()
 				for (int k = 0; k < nb_lights; k++)
 				{
 					light.position.x = alea(rand);
-					light.position.y = alea(rand);
+					light.position.z = alea(rand) - 100.0f;
 					inter_sphere.position = inter_sphere.position + (inter_sphere.normale * acne);
 					ray_to_light.origin = inter_sphere.position;
 					ray_to_light.direction = normalize(light.position - inter_sphere.position);
