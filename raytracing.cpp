@@ -66,6 +66,8 @@ bool intersect_scene(Ray &ray, Spheres &spheres, Intersection &intersection)
 	return false;
 }
 
+/* Distribution sur matériaux rugueux */
+
 float RDM_Beckmann(float NdotH, float alpha)
 {
 	if (NdotH > 0.0f)
@@ -78,6 +80,8 @@ float RDM_Beckmann(float NdotH, float alpha)
 	}
 	return 0.0f;
 }
+
+/* Coefficient de réflexion de Fresnel */
 
 float RDM_Fresnel(float LdotH, float extIOR, float intIOR)
 {
@@ -106,10 +110,14 @@ float RDM_G1(float DdotH, float DdotN, float alpha)
 		return 0.0f;
 }
 
+/* Fonction d'ombrage et de masquage de Smith */
+
 float RDM_Smith(float LdotH, float LdotN, float VdotH, float VdotN, float alpha)
 {
 	return RDM_G1(LdotH, LdotN, alpha) * RDM_G1(VdotH, VdotN, alpha);
 }
+
+/* Specular */
 
 Vec3F RDM_bsdf_s(float LdotH, float NdotH, float VdotH, float LdotN, float VdotN, Material &m)
 {
@@ -119,10 +127,14 @@ Vec3F RDM_bsdf_s(float LdotH, float NdotH, float VdotH, float LdotN, float VdotN
 	return m.specularColor * d * f * g / (4.0f * LdotN * VdotN);
 }
 
+/* Diffuse */
+
 Vec3F RDM_bsdf_d(Material &m)
 {
 	return m.diffuseColor / (float)M_PI;
 }
+
+/* Full BSDF */
 
 Vec3F RDM_bsdf(float LdotH, float NdotH, float VdotH, float LdotN, float VdotN, Material &m)
 {
@@ -144,9 +156,9 @@ Vec3F shade(Vec3F &n, Vec3F &v, Vec3F &l, Vec3F &lc, Material &mat)
 
 Vec3F trace_ray(Spheres &spheres, Lights &lights, Ray &ray)
 {
-	int light_size = 100;
-	int nb_lights = 200;
-	int max_depth = 5;
+	int light_size = 500;
+	int nb_lights = 50;
+	int max_depth = 3;
 
 	/* Générateur de nombre aléatoire */
 
@@ -166,7 +178,7 @@ Vec3F trace_ray(Spheres &spheres, Lights &lights, Ray &ray)
 			{
 				Light light;
 				light.position.x = lights[l].position.x + aleatoire(device);
-				light.position.y = lights[l].position.y + aleatoire(device);
+				light.position.y = 950.0f;
 				light.position.z = lights[l].position.z + aleatoire(device);
 				light.color = lights[l].color;
 				intersection.position = intersection.position + (intersection.normale * acne);
@@ -259,17 +271,17 @@ void init_scene(Spheres &spheres, Lights &lights)
 	mat_rouge.IOR = 1.0771f;
 	mat_rouge.roughness = 0.0589f;
 
-	mat_vert.diffuseColor = {0.016f, 0.143f, 0.04f};
-	mat_vert.specularColor = {1.0f, 0.739f, 0.721f};
-	mat_vert.IOR = 1.1051f;
-	mat_vert.roughness = 0.0567f;
+	mat_vert.diffuseColor = {0.016f, 0.073f, 0.04f};
+	mat_vert.specularColor = {1.0f, 1.056f, 1.146f};
+	mat_vert.IOR = 1.1481f;
+	mat_vert.roughness = 0.0625f;
 
-	mat_bleu.diffuseColor = {0.012f, 0.036f, 0.212f};
-	mat_bleu.specularColor = {1.0f, 0.748f, 0.718f};
-	mat_bleu.IOR = 1.1051f;
-	mat_bleu.roughness = 0.0568f;
+	mat_bleu.diffuseColor = {0.012f, 0.036f, 0.106f};
+	mat_bleu.specularColor = {1.0f, 0.965f, 1.07f};
+	mat_bleu.IOR = 1.1153f;
+	mat_bleu.roughness = 0.068;
 
-	mat_blanc.diffuseColor = {0.250f, 0.250f, 0.250f};
+	mat_blanc.diffuseColor = {0.200, 0.200, 0.200};
 	mat_blanc.specularColor = {1.0f, 0.766f, 0.762f};
 	mat_blanc.IOR = 1.1022f;
 	mat_blanc.roughness = 0.0579f;
@@ -281,23 +293,18 @@ void init_scene(Spheres &spheres, Lights &lights)
 
 	/* Sphères */
 
-	Sphere sphere_rouge, sphere_verte, sphere_bleue;
+	Sphere sphere_blanche, sphere_nickel;
 
-	sphere_rouge.position = {725.0f, 600.0f, 600.0f};
-	sphere_rouge.radius = 150.0f;
-	sphere_rouge.material = mat_rouge;
+	sphere_blanche.position = {750.0f, 500.0f, 500.0f};
+	sphere_blanche.radius = 175.0f;
+	sphere_blanche.material = mat_blanc;
 
-	sphere_verte.position = {275.0f, 500.0f, 400.0f};
-	sphere_verte.radius = 200.0f;
-	sphere_verte.material = mat_nickel;
+	sphere_nickel.position = {250.0f, 500.0f, 500.0f};
+	sphere_nickel.radius = 175.0f;
+	sphere_nickel.material = mat_nickel;
 
-	sphere_bleue.position = {500.0f, 200.0f, 200.0f};
-	sphere_bleue.radius = 50.0f;
-	sphere_bleue.material = mat_bleu;
-
-	spheres.push_back(sphere_rouge);
-	spheres.push_back(sphere_verte);
-	spheres.push_back(sphere_bleue);
+	spheres.push_back(sphere_blanche);
+	spheres.push_back(sphere_nickel);
 
 	/* Murs */
 
@@ -305,7 +312,7 @@ void init_scene(Spheres &spheres, Lights &lights)
 
 	sw1.material = mat_blanc;
 	sw2.material = mat_blanc;
-	sw3.material = mat_vert;
+	sw3.material = mat_bleu;
 	sw4.material = mat_rouge;
 	sw5.material = mat_blanc;
 
@@ -327,14 +334,14 @@ void init_scene(Spheres &spheres, Lights &lights)
 
 	Light light1, light2;
 
-	light1.position = {450.0f, 850.0f, 450.0f};
+	light1.position = {250.0f, 950.0f, 250.0f};
 	light1.color = {255.0f, 255.0f, 255.0f};
 
-	light2.position = {450.0f, 450.0f, -50.0f};
+	light2.position = {250.0f, 250.0f, -250.0f};
 	light2.color = {255.0f, 255.0f, 255.0f};
 
 	lights.push_back(light1);
-	lights.push_back(light2);
+	// lights.push_back(light2);
 }
 
 int main()

@@ -8,4 +8,4 @@
 *.out
 
 # Output images
-*.png
+out.png
