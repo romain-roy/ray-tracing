@@ -5,7 +5,7 @@
 /FreeImage/
 
 # Executables
-*.out
+*.exe
 
 # Output images
 out.png
