@@ -37,5 +37,3 @@ struct Intersection
 typedef std::vector<Sphere> Spheres;
 
 typedef std::vector<Intersection> Intersections;
-
-typedef std::vector<Light> Lights;

@@ -1,5 +1,3 @@
-#include <cmath>
-
 template <typename T>
 struct Vec3
 {
@@ -76,7 +74,7 @@ Vec3<T> operator/(const Vec3<T> &a, const float &b)
 
 Vec3F reflect(const Vec3F &I, const Vec3F &N)
 {
-	return I - N * 2.0f * dot(N, I);
+	return I - N * 2.f * dot(N, I);
 }
 
 template <typename T>
