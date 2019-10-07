@@ -2,13 +2,14 @@
 #include "vec3.h"
 #include "structures.h"
 #include "FreeImage/FreeImage.h"
+#include "read_off.h"
 
 #define WIDTH 1000
 #define HEIGHT 1000
 #define BPP 24
 
-#define MAX_DEPTH 1
-#define NB_LIGHTS 10
+#define MAX_DEPTH 0
+#define NB_LIGHTS 1
 
 const float acne = 0.0001f;
 
@@ -64,8 +65,7 @@ bool intersect_triangle(Ray &ray, Object &object, Intersection &intersection)
     h = cross(ray.direction, edge2);
     a = dot(edge1, h);
     if (a > -epsilon && a < epsilon)
-        return false; // Le rayon est parallèle au triangle.
-
+        return false;
     f = 1.f / a;
     s = ray.origin - object.geom.triangle.v0;
     u = f * (dot(s, h));
@@ -75,10 +75,8 @@ bool intersect_triangle(Ray &ray, Object &object, Intersection &intersection)
     v = f * (dot(ray.direction, q));
     if (v < 0.f || u + v > 1.f)
         return false;
-
-    // On calcule t pour savoir ou le point d'intersection se situe sur la ligne.
     float t = f * dot(edge2, q);
-    if (t > epsilon) // Intersection avec le rayon
+    if (t > epsilon)
     {
         intersection.distance = t;
         intersection.position = ray.origin + ray.direction * t;
@@ -86,7 +84,7 @@ bool intersect_triangle(Ray &ray, Object &object, Intersection &intersection)
         intersection.object = object;
         return true;
     }
-    else // On a bien une intersection de droite, mais pas de rayon.
+    else
         return false;
 }
 
@@ -270,7 +268,7 @@ int render_image(Objects &objects, Light &light)
 
     for (int j = 0; j < HEIGHT; j++)
     {
-#pragma omp parallel for
+        #pragma omp parallel for
         for (int i = 0; i < WIDTH; i++)
         {
             Ray ray;
@@ -290,14 +288,14 @@ int render_image(Objects &objects, Light &light)
 
     /* Ecriture de l'image */
 
-    if (FreeImage_Save(FIF_PNG, bitmap, "out.png", 0))
+    if (FreeImage_Save(FIF_PNG, bitmap, "out1.png", 0))
         printf("Image sauvegardée !\n");
     FreeImage_DeInitialise();
 
     return 0;
 }
 
-void init_scene(Objects &objects, Light &light)
+void init_scene(Objects &objects, Light &light, Vertices &vertices, Facades &facades)
 {
     /* Matériaux */
 
@@ -338,24 +336,40 @@ void init_scene(Objects &objects, Light &light)
     sphere_white.material = mat_white;
 
     sphere_nickel.geom.type = SPHERE;
-    sphere_nickel.geom.sphere.position = {250.f, 500.f, 500.f};
+    sphere_nickel.geom.sphere.position = {250.f, 700.f, 500.f};
     sphere_nickel.geom.sphere.radius = 175.f;
     sphere_nickel.material = mat_nickel;
 
     // objects.push_back(sphere_white);
-    // objects.push_back(sphere_nickel);
+    objects.push_back(sphere_nickel);
 
     /* Triangles */
 
-    Object triangle_red;
+    float size_factor = 50.f;
 
-    triangle_red.geom.type = TRIANGLE;
-    triangle_red.material = mat_red;
-    triangle_red.geom.triangle.v0 = {200.f, 200.f, 500.f};
-    triangle_red.geom.triangle.v1 = {500.f, 800.f, 550.f};
-    triangle_red.geom.triangle.v2 = {800.f, 200.f, 500.f};
+    /* Centrer l'objet */
 
-    objects.push_back(triangle_red);
+    Vec3F somme_vertices = vertices.at(0);
+    size_t vertices_count = vertices.size();
+    for (unsigned int i = 1; i < vertices_count; i++)
+        somme_vertices = somme_vertices + vertices.at(i);
+    Vec3F centre_gravite = somme_vertices / (float)vertices_count;
+    Vec3F offset = {500.f, 500.f, 500.f};
+    offset = offset - centre_gravite;
+
+    /* Création des triangles */
+
+    size_t facades_count = facades.size();
+    for (unsigned int i = 0; i < facades_count; i++)
+    {
+        Object triangle;
+        triangle.material = mat_white;
+        triangle.geom.type = TRIANGLE;
+        triangle.geom.triangle.v0 = vertices.at((int)facades.at(i).x) * size_factor + offset;
+        triangle.geom.triangle.v1 = vertices.at((int)facades.at(i).y) * size_factor + offset;
+        triangle.geom.triangle.v2 = vertices.at((int)facades.at(i).z) * size_factor + offset;
+        objects.push_back(triangle);
+    }
 
     /* Murs */
 
@@ -393,8 +407,12 @@ int main()
 {
     Objects objects;
     Light light;
+    Vertices vertices;
+    Facades facades;
 
-    init_scene(objects, light);
+    parse("triceratops.off", vertices, facades);
+
+    init_scene(objects, light, vertices, facades);
 
     if (render_image(objects, light))
         return 0;
