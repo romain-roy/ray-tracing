@@ -30,7 +30,7 @@ unsigned char clamp_color(float v)
 	return (unsigned char)v;
 }
 
-bool intersect_sphere(Ray &ray, Object &object, Intersection &intersection)
+bool intersect_sphere(Ray ray, Object object, Intersection &intersection)
 {
 	Vec3F pos = ray.origin - object.geom.sphere.position;
 	float a = 1.f; /* dot2(ray.direction); */
@@ -55,7 +55,7 @@ bool intersect_sphere(Ray &ray, Object &object, Intersection &intersection)
 	return false;
 }
 
-bool intersect_triangle(Ray &ray, Object &object, Intersection &intersection)
+bool intersect_triangle(Ray ray, Object object, Intersection &intersection)
 {
 	Vec3F edge1, edge2, h, s, q;
 	float a, f, u, v;
@@ -88,7 +88,7 @@ bool intersect_triangle(Ray &ray, Object &object, Intersection &intersection)
 		return false;
 }
 
-bool intersect_scene(Ray &ray, Objects &objects, Intersection &intersection)
+bool intersect_scene(Ray ray, Objects objects, Intersection &intersection)
 {
 	Intersections intersections;
 	size_t object_count = objects.size();
@@ -172,7 +172,7 @@ float RDM_Smith(float LdotH, float LdotN, float VdotH, float VdotN, float alpha)
 
 /* Specular */
 
-Vec3F RDM_bsdf_s(float LdotH, float NdotH, float VdotH, float LdotN, float VdotN, Material &m)
+Vec3F RDM_bsdf_s(float LdotH, float NdotH, float VdotH, float LdotN, float VdotN, Material m)
 {
 	float d = RDM_Beckmann(NdotH, m.roughness);
 	float f = RDM_Fresnel(LdotH, 1.f, m.IOR);
@@ -182,19 +182,19 @@ Vec3F RDM_bsdf_s(float LdotH, float NdotH, float VdotH, float LdotN, float VdotN
 
 /* Diffuse */
 
-Vec3F RDM_bsdf_d(Material &m)
+Vec3F RDM_bsdf_d(Material m)
 {
 	return m.diffuseColor / (float)M_PI;
 }
 
 /* Full BSDF */
 
-Vec3F RDM_bsdf(float LdotH, float NdotH, float VdotH, float LdotN, float VdotN, Material &m)
+Vec3F RDM_bsdf(float LdotH, float NdotH, float VdotH, float LdotN, float VdotN, Material m)
 {
 	return RDM_bsdf_d(m) + RDM_bsdf_s(LdotH, NdotH, VdotH, LdotN, VdotN, m);
 }
 
-Vec3F shade(Vec3F &n, Vec3F &v, Vec3F &l, Vec3F &lc, Material &mat)
+Vec3F shade(Vec3F n, Vec3F v, Vec3F l, Vec3F lc, Material mat)
 {
 	Vec3F h = normalize(v + l);
 	float LdotH = dot(l, h);
@@ -206,7 +206,7 @@ Vec3F shade(Vec3F &n, Vec3F &v, Vec3F &l, Vec3F &lc, Material &mat)
 	return lc * bsdf * LdotN;
 }
 
-Vec3F trace_ray(Objects &objects, Light &light, Ray &ray)
+Vec3F trace_ray(Objects objects, Light &light, Ray ray)
 {
 	Vec3F color, ret;
 	color = ret = {0.f, 0.f, 0.f};
@@ -252,7 +252,7 @@ Vec3F trace_ray(Objects &objects, Light &light, Ray &ray)
 	return ret;
 }
 
-int render_image(Objects &objects, Light &light)
+int render_image(Objects objects, Light light)
 {
 	/* Initialisation de l'image */
 
@@ -284,18 +284,20 @@ int render_image(Objects &objects, Light &light)
 			colorPixel.rgbBlue = clamp_color(color.z);
 			FreeImage_SetPixelColor(bitmap, i, j, &colorPixel);
 		}
+		if (j % 10 == 0)
+			printf("%d %%\n", (j / 10));
 	}
 
 	/* Ecriture de l'image */
 
-	if (FreeImage_Save(FIF_PNG, bitmap, "out.png", 0))
+	if (FreeImage_Save(FIF_PNG, bitmap, "triceratops.png", 0))
 		printf("Image sauvegardée !\n");
 	FreeImage_DeInitialise();
 
 	return 0;
 }
 
-void create_mesh(Objects &objects, Vertices &vertices, Facades &facades, Material material)
+void create_mesh(Objects &objects, Vertices &vertices, Facades facades, Material material)
 {
 	float taille = 500.f;
 
@@ -376,7 +378,7 @@ void init_scene(Objects &objects, Light &light, Vertices &vertices, Facades &fac
 	sphere_white.material = mat_white;
 
 	sphere_nickel.geom.type = SPHERE;
-	sphere_nickel.geom.sphere.position = {250.f, 700.f, 500.f};
+	sphere_nickel.geom.sphere.position = {250.f, 500.f, 500.f};
 	sphere_nickel.geom.sphere.radius = 175.f;
 	sphere_nickel.material = mat_nickel;
 
