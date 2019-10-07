@@ -288,7 +288,7 @@ int render_image(Objects &objects, Light &light)
 
     /* Ecriture de l'image */
 
-    if (FreeImage_Save(FIF_PNG, bitmap, "out1.png", 0))
+    if (FreeImage_Save(FIF_PNG, bitmap, "out.png", 0))
         printf("Image sauvegardée !\n");
     FreeImage_DeInitialise();
 
