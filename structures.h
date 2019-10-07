@@ -11,11 +11,11 @@ struct Geometry
 		struct
 		{
 			Vec3F position;
-            float radius;
+			float radius;
 		} sphere;
 		struct
 		{
-            Vec3F v0, v1, v2;
+			Vec3F v0, v1, v2;
 		} triangle;
 	};
 };
@@ -33,13 +33,6 @@ struct Object
 	Geometry geom;
 	Material material;
 };
-
-// struct Sphere
-// {
-// 	Vec3F position;
-// 	float radius;
-// 	Material material;
-// };
 
 struct Ray
 {

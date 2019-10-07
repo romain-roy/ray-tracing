@@ -1,11 +1,11 @@
 # Visual Studio Code Properties
-/.vscode/
+# /.vscode/
 
 # FreeImage Library
-/FreeImage/
+# /FreeImage/
 
-# Executables
+# Executable
 *.exe
 
-# Output images
+# Output image
 out.png
