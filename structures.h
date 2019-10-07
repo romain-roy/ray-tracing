@@ -1,3 +1,25 @@
+enum Type
+{
+	SPHERE = 1,
+	TRIANGLE
+};
+
+struct Geometry
+{
+	Type type;
+	union {
+		struct
+		{
+			Vec3F position;
+            float radius;
+		} sphere;
+		struct
+		{
+            Vec3F v0, v1, v2;
+		} triangle;
+	};
+};
+
 struct Material
 {
 	float IOR;
@@ -6,12 +28,18 @@ struct Material
 	Vec3F diffuseColor;
 };
 
-struct Sphere
+struct Object
 {
-	Vec3F position;
-	float radius;
+	Geometry geom;
 	Material material;
 };
+
+// struct Sphere
+// {
+// 	Vec3F position;
+// 	float radius;
+// 	Material material;
+// };
 
 struct Ray
 {
@@ -28,12 +56,12 @@ struct Light
 
 struct Intersection
 {
-	Sphere sphere;
+	Object object;
 	Vec3F position;
 	float distance;
 	Vec3F normale;
 };
 
-typedef std::vector<Sphere> Spheres;
+typedef std::vector<Object> Objects;
 
 typedef std::vector<Intersection> Intersections;
