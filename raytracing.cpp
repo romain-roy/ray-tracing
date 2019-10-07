@@ -1,8 +1,8 @@
 #include <random>
 #include "vec3.h"
 #include "structures.h"
-#include "FreeImage/FreeImage.h"
 #include "read_off.h"
+#include "FreeImage/FreeImage.h"
 
 #define WIDTH 1000
 #define HEIGHT 1000
@@ -295,6 +295,46 @@ int render_image(Objects &objects, Light &light)
 	return 0;
 }
 
+void create_mesh(Objects &objects, Vertices &vertices, Facades &facades, Material material)
+{
+	float taille = 500.f;
+
+	/* Centrer l'objet */
+
+	Vec3F somme_vertices = vertices.at(0);
+	size_t vertices_count = vertices.size();
+	float norm_max = norm(vertices.at(0));
+	for (unsigned int i = 1; i < vertices_count; i++)
+	{
+		somme_vertices = somme_vertices + vertices.at(i);
+		if (norm(vertices.at(i)) > norm_max)
+			norm_max = norm(vertices.at(i));
+	}
+	Vec3F centre_gravite = somme_vertices / (float)vertices_count;
+	Vec3F offset = {500.f, 500.f, 500.f};
+	offset = offset - centre_gravite;
+
+	/* Normaliser sa taille */
+
+	norm_max /= taille;
+	for (unsigned int i = 0; i < vertices_count; i++)
+		vertices.at(i) = vertices.at(i) / norm_max;
+
+	/* Création des triangles */
+
+	size_t facades_count = facades.size();
+	for (unsigned int i = 0; i < facades_count; i++)
+	{
+		Object triangle;
+		triangle.material = material;
+		triangle.geom.type = TRIANGLE;
+		triangle.geom.triangle.v0 = vertices.at((int)facades.at(i).x) + offset;
+		triangle.geom.triangle.v1 = vertices.at((int)facades.at(i).y) + offset;
+		triangle.geom.triangle.v2 = vertices.at((int)facades.at(i).z) + offset;
+		objects.push_back(triangle);
+	}
+}
+
 void init_scene(Objects &objects, Light &light, Vertices &vertices, Facades &facades)
 {
 	/* Matériaux */
@@ -345,31 +385,7 @@ void init_scene(Objects &objects, Light &light, Vertices &vertices, Facades &fac
 
 	/* Triangles */
 
-	float size_factor = 50.f;
-
-	/* Centrer l'objet */
-
-	Vec3F somme_vertices = vertices.at(0);
-	size_t vertices_count = vertices.size();
-	for (unsigned int i = 1; i < vertices_count; i++)
-		somme_vertices = somme_vertices + vertices.at(i);
-	Vec3F centre_gravite = somme_vertices / (float)vertices_count;
-	Vec3F offset = {500.f, 500.f, 500.f};
-	offset = offset - centre_gravite;
-
-	/* Création des triangles */
-
-	size_t facades_count = facades.size();
-	for (unsigned int i = 0; i < facades_count; i++)
-	{
-		Object triangle;
-		triangle.material = mat_white;
-		triangle.geom.type = TRIANGLE;
-		triangle.geom.triangle.v0 = vertices.at((int)facades.at(i).x) * size_factor + offset;
-		triangle.geom.triangle.v1 = vertices.at((int)facades.at(i).y) * size_factor + offset;
-		triangle.geom.triangle.v2 = vertices.at((int)facades.at(i).z) * size_factor + offset;
-		objects.push_back(triangle);
-	}
+	create_mesh(objects, vertices, facades, mat_white);
 
 	/* Murs */
 
