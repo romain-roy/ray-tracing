@@ -1,4 +1,5 @@
 #include <random>
+#include <ctime>
 #include "vec3.h"
 #include "structures.h"
 #include "read_off.h"
@@ -285,8 +286,8 @@ int render_image(Objects objects, Light light)
             colorPixel.rgbBlue = clamp_color(color.z);
             FreeImage_SetPixelColor(bitmap, i, j, &colorPixel);
         }
-        if (j % 10 == 0)
-            printf("Rendering image... %d %%\r", (j / 10));
+        if ((j + 1) % 10 == 0)
+            printf("Rendering image... %d %%\r", ((j + 1) / 10));
     }
 
     /* Écriture de l'image */
@@ -430,9 +431,14 @@ int main()
     Vertices vertices;
     Facades facades;
 
-    printf("RAY TRACING by Romain Roy\n-------------------------\nConfiguration:\nRay depth: %d\nNumber of lights: %d\n-------------------------\n", MAX_DEPTH, NB_LIGHTS);
+    std::time_t t = std::time(0);
+    std::tm *now = std::localtime(&t);
 
-    if (!parse("meshs/bunny.off", vertices, facades))
+    printf("RAY TRACING by Romain Roy\n-------------------------\n");
+    printf("Start time: %d:%d:%d\n", now->tm_hour, now->tm_min, now->tm_sec);
+    printf("Rendering image... 0 %%\r");
+
+    if (!parse("meshs/dino.off", vertices, facades))
         return 1;
 
     Objects objects;
@@ -440,8 +446,13 @@ int main()
 
     init_scene(objects, light, vertices, facades);
 
-    if (render_image(objects, light))
+    if (render_image(objects, light) == 0)
+    {
+        t = std::time(0);
+        now = std::localtime(&t);
+        printf("Finish time: %d:%d:%d\n", now->tm_hour, now->tm_min, now->tm_sec);
         return 0;
+    }
 
     return 1;
 }
