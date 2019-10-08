@@ -234,44 +234,48 @@ Vec3F trace_ray(Objects objects, Light &light, Ray ray, Boxs boxs)
     Vec3F color, ret;
     color = ret = {0.f, 0.f, 0.f};
     Intersection intersection;
-    if (intersect_box(ray, boxs.at(0)))
+    size_t boxs_count = boxs.size();
+    for (unsigned int b = 0; b < boxs_count; b++)
     {
-        if (intersect_scene(ray, objects, intersection))
+        if (intersect_box(ray, boxs.at(b)))
         {
-            for (int k = 0; k < NB_LIGHTS; k++)
+            if (intersect_scene(ray, objects, intersection))
             {
-                light.position.x = 250.f + (float)aleatoire(device);
-                light.position.z = 250.f + (float)aleatoire(device);
-                intersection.position = intersection.position + (intersection.normale * acne);
-                Ray ray_shadow;
-                ray_shadow.origin = intersection.position;
-                ray_shadow.direction = normalize(light.position - intersection.position);
-                Intersection inter_shadow;
-                if (!intersect_scene(ray_shadow, objects, inter_shadow) || inter_shadow.position.x < 0.f || inter_shadow.position.x > 1000.f || inter_shadow.position.y < 0.f || inter_shadow.position.y > 1000.f || inter_shadow.position.z < 0.f || inter_shadow.position.z > 1000.f)
+                for (int k = 0; k < NB_LIGHTS; k++)
                 {
-                    Vec3F inv = ray.direction * -1.f;
-                    color = color + (shade(intersection.normale, inv, ray_shadow.direction, light.color, intersection.object.material) / (float)NB_LIGHTS * 20.f);
+                    light.position.x = 250.f + (float)aleatoire(device);
+                    light.position.z = 250.f + (float)aleatoire(device);
+                    intersection.position = intersection.position + (intersection.normale * acne);
+                    Ray ray_shadow;
+                    ray_shadow.origin = intersection.position;
+                    ray_shadow.direction = normalize(light.position - intersection.position);
+                    Intersection inter_shadow;
+                    if (!intersect_scene(ray_shadow, objects, inter_shadow) || inter_shadow.position.x < 0.f || inter_shadow.position.x > 1000.f || inter_shadow.position.y < 0.f || inter_shadow.position.y > 1000.f || inter_shadow.position.z < 0.f || inter_shadow.position.z > 1000.f)
+                    {
+                        Vec3F inv = ray.direction * -1.f;
+                        color = color + (shade(intersection.normale, inv, ray_shadow.direction, light.color, intersection.object.material) / (float)NB_LIGHTS * 20.f);
+                    }
                 }
-            }
-            if (ray.depth < MAX_DEPTH)
-            {
-                Ray ray_reflect;
-                Vec3F dir_ray_reflect = reflect(ray.direction, intersection.normale);
-                dir_ray_reflect = normalize(dir_ray_reflect);
-                ray_reflect.origin = intersection.position + dir_ray_reflect * acne;
-                ray_reflect.direction = dir_ray_reflect;
-                ray_reflect.depth = ray.depth + 1;
-                Vec3F color_reflect = trace_ray(objects, light, ray_reflect, boxs);
-                ret = color + intersection.object.material.specularColor * RDM_Fresnel(dot(ray_reflect.direction, intersection.normale), 1.f, intersection.object.material.IOR) * color_reflect;
+                if (ray.depth < MAX_DEPTH)
+                {
+                    Ray ray_reflect;
+                    Vec3F dir_ray_reflect = reflect(ray.direction, intersection.normale);
+                    dir_ray_reflect = normalize(dir_ray_reflect);
+                    ray_reflect.origin = intersection.position + dir_ray_reflect * acne;
+                    ray_reflect.direction = dir_ray_reflect;
+                    ray_reflect.depth = ray.depth + 1;
+                    Vec3F color_reflect = trace_ray(objects, light, ray_reflect, boxs);
+                    ret = color + intersection.object.material.specularColor * RDM_Fresnel(dot(ray_reflect.direction, intersection.normale), 1.f, intersection.object.material.IOR) * color_reflect;
+                }
+                else
+                {
+                    ret = color;
+                }
             }
             else
             {
-                ret = color;
+                return {0.f, 0.f, 0.f};
             }
-        }
-        else
-        {
-            return {0.f, 0.f, 0.f};
         }
     }
     return ret;
@@ -357,7 +361,7 @@ void create_mesh(Objects &objects, Vertices &vertices, Facades facades, Material
             z_max = vertices.at(i).z;
     }
     norm_max /= taille;
-    
+
     Vec3F centre_gravite = somme_vertices / (float)vertices_count;
     Vec3F offset = {500.f, 500.f, 500.f};
     offset = offset - (centre_gravite / norm_max);
@@ -430,18 +434,29 @@ void init_scene(Objects &objects, Light &light, Vertices &vertices, Facades &fac
 
     Object sphere_white, sphere_nickel;
 
-    sphere_white.geom.type = SPHERE;
-    sphere_white.geom.sphere.position = {750.f, 500.f, 500.f};
-    sphere_white.geom.sphere.radius = 175.f;
-    sphere_white.material = mat_white;
-
     sphere_nickel.geom.type = SPHERE;
-    sphere_nickel.geom.sphere.position = {250.f, 500.f, 500.f};
+    sphere_nickel.geom.sphere.position = {250.f, 200.f, 500.f};
     sphere_nickel.geom.sphere.radius = 175.f;
     sphere_nickel.material = mat_nickel;
 
-    // objects.push_back(sphere_white);
+    sphere_white.geom.type = SPHERE;
+    sphere_white.geom.sphere.position = {750.f, 700.f, 500.f};
+    sphere_white.geom.sphere.radius = 175.f;
+    sphere_white.material = mat_white;
+
     // objects.push_back(sphere_nickel);
+    // objects.push_back(sphere_white);
+
+    /* Boîtes */
+
+    // Box box_sphere_nickel, box_sphere_white;
+    // box_sphere_nickel.lb = {sphere_nickel.geom.sphere.position.x - sphere_nickel.geom.sphere.radius, sphere_nickel.geom.sphere.position.y - sphere_nickel.geom.sphere.radius, sphere_nickel.geom.sphere.position.z - sphere_nickel.geom.sphere.radius};
+    // box_sphere_nickel.rt = {sphere_nickel.geom.sphere.position.x + sphere_nickel.geom.sphere.radius, sphere_nickel.geom.sphere.position.y + sphere_nickel.geom.sphere.radius, sphere_nickel.geom.sphere.position.z + sphere_nickel.geom.sphere.radius};
+    // box_sphere_white.lb = {sphere_white.geom.sphere.position.x - sphere_white.geom.sphere.radius, sphere_white.geom.sphere.position.y - sphere_white.geom.sphere.radius, sphere_white.geom.sphere.position.z - sphere_white.geom.sphere.radius};
+    // box_sphere_white.rt = {sphere_white.geom.sphere.position.x + sphere_white.geom.sphere.radius, sphere_white.geom.sphere.position.y + sphere_white.geom.sphere.radius, sphere_white.geom.sphere.position.z + sphere_white.geom.sphere.radius};
+
+    // boxs.push_back(box_sphere_nickel);
+    // boxs.push_back(box_sphere_white);
 
     /* Triangles */
 
