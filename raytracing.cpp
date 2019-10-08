@@ -265,7 +265,7 @@ int render_image(Objects objects, Light light)
 
     /* Traitement */
 
-    Vec3F camera = {500.f, 500.f, -2000.f};
+    Vec3F camera = {500.f, 500.f, 3000.f};
 
     for (int j = 0; j < HEIGHT; j++)
     {
@@ -273,7 +273,7 @@ int render_image(Objects objects, Light light)
         for (int i = 0; i < WIDTH; i++)
         {
             Ray ray;
-            ray.origin = {(float)i, (float)j, 0.f};
+            ray.origin = {(float)i, (float)j, 1000.f};
             ray.direction = normalize(ray.origin - camera);
             ray.depth = 0;
 
@@ -286,13 +286,13 @@ int render_image(Objects objects, Light light)
             FreeImage_SetPixelColor(bitmap, i, j, &colorPixel);
         }
         if (j % 10 == 0)
-            printf("%d %%\r", (j / 10));
+            printf("Rendering image... %d %%\r", (j / 10));
     }
 
     /* Écriture de l'image */
 
     if (FreeImage_Save(FIF_PNG, bitmap, "out.png", 0))
-        printf("Image successfully saved!\n");
+        printf("\nImage successfully saved!\n");
     FreeImage_DeInitialise();
 
     return 0;
@@ -392,29 +392,32 @@ void init_scene(Objects &objects, Light &light, Vertices &vertices, Facades &fac
 
     /* Murs */
 
-    Object wall_back, wall_up, wall_right, wall_left, wall_down;
+    Object wall_back, wall_front, wall_up, wall_down, wall_right, wall_left;
 
     wall_back.material = mat_white;
+    wall_front.material = mat_white;
     wall_up.material = mat_white;
+    wall_down.material = mat_white;
     wall_right.material = mat_red;
     wall_left.material = mat_blue;
-    wall_down.material = mat_white;
 
-    wall_back.geom.type = wall_up.geom.type = wall_right.geom.type = wall_left.geom.type = wall_down.geom.type = SPHERE;
+    wall_back.geom.type = wall_up.geom.type = wall_right.geom.type = wall_left.geom.type = wall_down.geom.type = wall_front.geom.type = SPHERE;
 
-    wall_back.geom.sphere.radius = wall_up.geom.sphere.radius = wall_right.geom.sphere.radius = wall_left.geom.sphere.radius = wall_down.geom.sphere.radius = 130000.f;
+    wall_back.geom.sphere.radius = wall_front.geom.sphere.radius = wall_up.geom.sphere.radius = wall_right.geom.sphere.radius = wall_left.geom.sphere.radius = wall_down.geom.sphere.radius = 130000.f;
 
     wall_back.geom.sphere.position = {500.f, 500.f, wall_back.geom.sphere.radius + 1001.f};
+    wall_front.geom.sphere.position = {500.f, 500.f, -wall_front.geom.sphere.radius - 1.f};
     wall_up.geom.sphere.position = {500.f, wall_up.geom.sphere.radius + 1001.f, 500.f};
+    wall_down.geom.sphere.position = {500.f, -wall_down.geom.sphere.radius - 1.f, 500.f};
     wall_right.geom.sphere.position = {wall_right.geom.sphere.radius + 1001.f, 500.f, 500.f};
     wall_left.geom.sphere.position = {-wall_left.geom.sphere.radius - 1.f, 500.f, 500.f};
-    wall_down.geom.sphere.position = {500.f, -wall_down.geom.sphere.radius - 1.f, 500.f};
 
-    objects.push_back(wall_back);
+    // objects.push_back(wall_back);
+    objects.push_back(wall_front);
     objects.push_back(wall_up);
+    objects.push_back(wall_down);
     objects.push_back(wall_right);
     objects.push_back(wall_left);
-    objects.push_back(wall_down);
 
     /* Lumière */
 
@@ -427,7 +430,9 @@ int main()
     Vertices vertices;
     Facades facades;
 
-    if (!parse("meshs/king.off", vertices, facades))
+    printf("RAY TRACING by Romain Roy\n-------------------------\nConfiguration:\nRay depth: %d\nNumber of lights: %d\n-------------------------\n", MAX_DEPTH, NB_LIGHTS);
+
+    if (!parse("meshs/bunny.off", vertices, facades))
         return 1;
 
     Objects objects;
