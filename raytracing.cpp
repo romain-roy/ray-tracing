@@ -8,8 +8,8 @@
 #define HEIGHT 1000
 #define BPP 24
 
-#define MAX_DEPTH 1
-#define NB_LIGHTS 10
+#define MAX_DEPTH 0
+#define NB_LIGHTS 1
 
 const float acne = 0.0001f;
 const float PI = (float)atan(1.f) * 4.f;
@@ -286,13 +286,13 @@ int render_image(Objects objects, Light light)
             FreeImage_SetPixelColor(bitmap, i, j, &colorPixel);
         }
         if (j % 10 == 0)
-            printf("%d %%\n", (j / 10));
+            printf("%d %%\r", (j / 10));
     }
 
-    /* Ecriture de l'image */
+    /* Écriture de l'image */
 
     if (FreeImage_Save(FIF_PNG, bitmap, "out.png", 0))
-        printf("Image sauvegardée !\n");
+        printf("Image successfully saved!\n");
     FreeImage_DeInitialise();
 
     return 0;
@@ -345,28 +345,28 @@ void init_scene(Objects &objects, Light &light, Vertices &vertices, Facades &fac
     Material mat_red, mat_green, mat_blue, mat_white, mat_nickel;
 
     mat_red.diffuseColor = {0.26f, 0.036f, 0.014f};
-    mat_red.specularColor = {1.0f, 0.852f, 1.172f};
+    mat_red.specularColor = {1.f, 0.852f, 1.172f};
     mat_red.IOR = 1.0771f;
     mat_red.roughness = 0.0589f;
 
     mat_green.diffuseColor = {0.016f, 0.073f, 0.04f};
-    mat_green.specularColor = {1.0f, 1.056f, 1.146f};
+    mat_green.specularColor = {1.f, 1.056f, 1.146f};
     mat_green.IOR = 1.1481f;
     mat_green.roughness = 0.0625f;
 
     mat_blue.diffuseColor = {0.012f, 0.036f, 0.106f};
-    mat_blue.specularColor = {1.0f, 0.965f, 1.07f};
+    mat_blue.specularColor = {1.f, 0.965f, 1.07f};
     mat_blue.IOR = 1.1153f;
     mat_blue.roughness = 0.068f;
 
-    mat_white.diffuseColor = {0.200f, 0.200f, 0.200f};
-    mat_white.specularColor = {1.0f, 0.766f, 0.762f};
+    mat_white.diffuseColor = {0.2f, 0.2f, 0.2f};
+    mat_white.specularColor = {1.f, 0.766f, 0.762f};
     mat_white.IOR = 1.1022f;
     mat_white.roughness = 0.0579f;
 
     mat_nickel.diffuseColor = {0.014f, 0.012f, 0.012f};
-    mat_nickel.specularColor = {1.0f, 0.882f, 0.786f};
-    mat_nickel.IOR = 30.0f;
+    mat_nickel.specularColor = {1.f, 0.882f, 0.786f};
+    mat_nickel.IOR = 30.f;
     mat_nickel.roughness = 0.01f;
 
     /* Sphères */
@@ -424,13 +424,14 @@ void init_scene(Objects &objects, Light &light, Vertices &vertices, Facades &fac
 
 int main()
 {
-    Objects objects;
-    Light light;
     Vertices vertices;
     Facades facades;
 
-    if (!parse("meshs/triceratops.off", vertices, facades))
+    if (!parse("meshs/king.off", vertices, facades))
         return 1;
+
+    Objects objects;
+    Light light;
 
     init_scene(objects, light, vertices, facades);
 
