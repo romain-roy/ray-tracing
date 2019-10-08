@@ -356,13 +356,14 @@ void create_mesh(Objects &objects, Vertices &vertices, Facades facades, Material
         if (vertices.at(i).z > z_max)
             z_max = vertices.at(i).z;
     }
+    norm_max /= taille;
+    
     Vec3F centre_gravite = somme_vertices / (float)vertices_count;
     Vec3F offset = {500.f, 500.f, 500.f};
-    offset = offset - centre_gravite;
+    offset = offset - (centre_gravite / norm_max);
 
     /* Normaliser sa taille */
 
-    norm_max /= taille;
     for (unsigned int i = 0; i < vertices_count; i++)
         vertices.at(i) = vertices.at(i) / norm_max;
 
@@ -494,7 +495,7 @@ int main()
 
     printf("Rendering image... 0 %%\r");
 
-    if (!parse("meshs/dino.off", vertices, facades))
+    if (!parse("meshs/bunny.off", vertices, facades))
         return 1;
 
     Objects objects;
