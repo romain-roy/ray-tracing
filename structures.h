@@ -34,6 +34,11 @@ struct Object
 	Material material;
 };
 
+struct Box
+{
+    Vec3F lb, rt;
+};
+
 struct Ray
 {
 	Vec3F origin;
@@ -58,3 +63,5 @@ struct Intersection
 typedef std::vector<Object> Objects;
 
 typedef std::vector<Intersection> Intersections;
+
+typedef std::vector<Box> Boxs;

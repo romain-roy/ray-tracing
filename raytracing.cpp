@@ -90,6 +90,27 @@ bool intersect_triangle(Ray ray, Object object, Intersection &intersection)
         return false;
 }
 
+bool intersect_box(Ray ray, Box box)
+{
+    Vec3F dir_frac;
+    dir_frac.x = 1.0f / ray.direction.x;
+    dir_frac.y = 1.0f / ray.direction.y;
+    dir_frac.z = 1.0f / ray.direction.z;
+    float t1 = (box.lb.x - ray.origin.x) * dir_frac.x;
+    float t2 = (box.rt.x - ray.origin.x) * dir_frac.x;
+    float t3 = (box.lb.y - ray.origin.y) * dir_frac.y;
+    float t4 = (box.rt.y - ray.origin.y) * dir_frac.y;
+    float t5 = (box.lb.z - ray.origin.z) * dir_frac.z;
+    float t6 = (box.rt.z - ray.origin.z) * dir_frac.z;
+    float tmin = std::max(std::max(std::min(t1, t2), std::min(t3, t4)), std::min(t5, t6));
+    float tmax = std::min(std::min(std::max(t1, t2), std::max(t3, t4)), std::max(t5, t6));
+    if (tmax < 0)
+        return false;
+    if (tmin > tmax)
+        return false;
+    return true;
+}
+
 bool intersect_scene(Ray ray, Objects objects, Intersection &intersection)
 {
     Intersections intersections;
@@ -208,53 +229,55 @@ Vec3F shade(Vec3F n, Vec3F v, Vec3F l, Vec3F lc, Material mat)
     return lc * bsdf * LdotN;
 }
 
-Vec3F trace_ray(Objects objects, Light &light, Ray ray)
+Vec3F trace_ray(Objects objects, Light &light, Ray ray, Boxs boxs)
 {
     Vec3F color, ret;
     color = ret = {0.f, 0.f, 0.f};
     Intersection intersection;
-    if (intersect_scene(ray, objects, intersection))
+    if (intersect_box(ray, boxs.at(0)))
     {
-        for (int k = 0; k < NB_LIGHTS; k++)
+        if (intersect_scene(ray, objects, intersection))
         {
-            light.position.x = 250.f + (float)aleatoire(device);
-            light.position.z = 250.f + (float)aleatoire(device);
-            intersection.position = intersection.position + (intersection.normale * acne);
-            Ray ray_shadow;
-            ray_shadow.origin = intersection.position;
-            ray_shadow.direction = normalize(light.position - intersection.position);
-            Intersection inter_shadow;
-            if (!intersect_scene(ray_shadow, objects, inter_shadow) || inter_shadow.position.x < 0.f || inter_shadow.position.x > 1000.f || inter_shadow.position.y < 0.f || inter_shadow.position.y > 1000.f || inter_shadow.position.z < 0.f || inter_shadow.position.z > 1000.f)
+            for (int k = 0; k < NB_LIGHTS; k++)
             {
-                Vec3F inv = ray.direction * -1.f;
-                color = color + (shade(intersection.normale, inv, ray_shadow.direction, light.color, intersection.object.material) / (float)NB_LIGHTS * 20.f);
+                light.position.x = 250.f + (float)aleatoire(device);
+                light.position.z = 250.f + (float)aleatoire(device);
+                intersection.position = intersection.position + (intersection.normale * acne);
+                Ray ray_shadow;
+                ray_shadow.origin = intersection.position;
+                ray_shadow.direction = normalize(light.position - intersection.position);
+                Intersection inter_shadow;
+                if (!intersect_scene(ray_shadow, objects, inter_shadow) || inter_shadow.position.x < 0.f || inter_shadow.position.x > 1000.f || inter_shadow.position.y < 0.f || inter_shadow.position.y > 1000.f || inter_shadow.position.z < 0.f || inter_shadow.position.z > 1000.f)
+                {
+                    Vec3F inv = ray.direction * -1.f;
+                    color = color + (shade(intersection.normale, inv, ray_shadow.direction, light.color, intersection.object.material) / (float)NB_LIGHTS * 20.f);
+                }
             }
-        }
-        if (ray.depth < MAX_DEPTH)
-        {
-            Ray ray_reflect;
-            Vec3F dir_ray_reflect = reflect(ray.direction, intersection.normale);
-            dir_ray_reflect = normalize(dir_ray_reflect);
-            ray_reflect.origin = intersection.position + dir_ray_reflect * acne;
-            ray_reflect.direction = dir_ray_reflect;
-            ray_reflect.depth = ray.depth + 1;
-            Vec3F color_reflect = trace_ray(objects, light, ray_reflect);
-            ret = color + intersection.object.material.specularColor * RDM_Fresnel(dot(ray_reflect.direction, intersection.normale), 1.f, intersection.object.material.IOR) * color_reflect;
+            if (ray.depth < MAX_DEPTH)
+            {
+                Ray ray_reflect;
+                Vec3F dir_ray_reflect = reflect(ray.direction, intersection.normale);
+                dir_ray_reflect = normalize(dir_ray_reflect);
+                ray_reflect.origin = intersection.position + dir_ray_reflect * acne;
+                ray_reflect.direction = dir_ray_reflect;
+                ray_reflect.depth = ray.depth + 1;
+                Vec3F color_reflect = trace_ray(objects, light, ray_reflect, boxs);
+                ret = color + intersection.object.material.specularColor * RDM_Fresnel(dot(ray_reflect.direction, intersection.normale), 1.f, intersection.object.material.IOR) * color_reflect;
+            }
+            else
+            {
+                ret = color;
+            }
         }
         else
         {
-            ret = color;
+            return {0.f, 0.f, 0.f};
         }
     }
-    else
-    {
-        return {0.f, 0.f, 0.f};
-    }
-
     return ret;
 }
 
-int render_image(Objects objects, Light light)
+int render_image(Objects objects, Light light, Boxs boxs)
 {
     /* Initialisation de l'image */
 
@@ -270,7 +293,7 @@ int render_image(Objects objects, Light light)
 
     for (int j = 0; j < HEIGHT; j++)
     {
-        #pragma omp parallel for
+#pragma omp parallel for
         for (int i = 0; i < WIDTH; i++)
         {
             Ray ray;
@@ -278,7 +301,7 @@ int render_image(Objects objects, Light light)
             ray.direction = normalize(ray.origin - camera);
             ray.depth = 0;
 
-            Vec3F color = trace_ray(objects, light, ray);
+            Vec3F color = trace_ray(objects, light, ray, boxs);
 
             RGBQUAD colorPixel;
             colorPixel.rgbRed = clamp_color(color.x);
@@ -299,9 +322,16 @@ int render_image(Objects objects, Light light)
     return 0;
 }
 
-void create_mesh(Objects &objects, Vertices &vertices, Facades facades, Material material)
+void create_mesh(Objects &objects, Vertices &vertices, Facades facades, Material material, Boxs &boxs)
 {
     float taille = 500.f;
+    Box box;
+    float x_min = vertices.at(0).x;
+    float y_min = vertices.at(0).y;
+    float z_min = vertices.at(0).z;
+    float x_max = vertices.at(0).x;
+    float y_max = vertices.at(0).y;
+    float z_max = vertices.at(0).z;
 
     /* Centrer l'objet */
 
@@ -313,6 +343,18 @@ void create_mesh(Objects &objects, Vertices &vertices, Facades facades, Material
         somme_vertices = somme_vertices + vertices.at(i);
         if (norm(vertices.at(i)) > norm_max)
             norm_max = norm(vertices.at(i));
+        if (vertices.at(i).x < x_min)
+            x_min = vertices.at(i).x;
+        if (vertices.at(i).y < y_min)
+            y_min = vertices.at(i).y;
+        if (vertices.at(i).z < z_min)
+            z_min = vertices.at(i).z;
+        if (vertices.at(i).x > x_max)
+            x_max = vertices.at(i).x;
+        if (vertices.at(i).y > y_max)
+            y_max = vertices.at(i).y;
+        if (vertices.at(i).z > z_max)
+            z_max = vertices.at(i).z;
     }
     Vec3F centre_gravite = somme_vertices / (float)vertices_count;
     Vec3F offset = {500.f, 500.f, 500.f};
@@ -337,9 +379,22 @@ void create_mesh(Objects &objects, Vertices &vertices, Facades facades, Material
         triangle.geom.triangle.v2 = vertices.at((int)facades.at(i).z) + offset;
         objects.push_back(triangle);
     }
+
+    /* Création de la boîte englobante */
+
+    x_min = x_min / norm_max + offset.x;
+    y_min = y_min / norm_max + offset.y;
+    z_min = z_min / norm_max + offset.z;
+    x_max = x_max / norm_max + offset.x;
+    y_max = y_max / norm_max + offset.y;
+    z_max = z_max / norm_max + offset.z;
+
+    box.lb = {x_min, y_min, z_min};
+    box.rt = {x_max, y_max, z_max};
+    boxs.push_back(box);
 }
 
-void init_scene(Objects &objects, Light &light, Vertices &vertices, Facades &facades)
+void init_scene(Objects &objects, Light &light, Vertices &vertices, Facades &facades, Boxs &boxs)
 {
     /* Matériaux */
 
@@ -389,7 +444,7 @@ void init_scene(Objects &objects, Light &light, Vertices &vertices, Facades &fac
 
     /* Triangles */
 
-    create_mesh(objects, vertices, facades, mat_white);
+    create_mesh(objects, vertices, facades, mat_white, boxs);
 
     /* Murs */
 
@@ -414,11 +469,11 @@ void init_scene(Objects &objects, Light &light, Vertices &vertices, Facades &fac
     wall_left.geom.sphere.position = {-wall_left.geom.sphere.radius - 1.f, 500.f, 500.f};
 
     // objects.push_back(wall_back);
-    objects.push_back(wall_front);
-    objects.push_back(wall_up);
-    objects.push_back(wall_down);
-    objects.push_back(wall_right);
-    objects.push_back(wall_left);
+    // objects.push_back(wall_front);
+    // objects.push_back(wall_up);
+    // objects.push_back(wall_down);
+    // objects.push_back(wall_right);
+    // objects.push_back(wall_left);
 
     /* Lumière */
 
@@ -431,11 +486,12 @@ int main()
     Vertices vertices;
     Facades facades;
 
-    std::time_t t = std::time(0);
-    std::tm *now = std::localtime(&t);
-
     printf("RAY TRACING by Romain Roy\n-------------------------\n");
-    printf("Start time: %d:%d:%d\n", now->tm_hour, now->tm_min, now->tm_sec);
+
+    std::time_t t1 = std::time(0);
+    std::tm *start = std::localtime(&t1);
+    printf("Start time: %d:%d:%d\n", start->tm_hour, start->tm_min, start->tm_sec);
+
     printf("Rendering image... 0 %%\r");
 
     if (!parse("meshs/dino.off", vertices, facades))
@@ -443,14 +499,19 @@ int main()
 
     Objects objects;
     Light light;
+    Boxs boxs;
 
-    init_scene(objects, light, vertices, facades);
+    init_scene(objects, light, vertices, facades, boxs);
 
-    if (render_image(objects, light) == 0)
+    if (render_image(objects, light, boxs) == 0)
     {
-        t = std::time(0);
-        now = std::localtime(&t);
-        printf("Finish time: %d:%d:%d\n", now->tm_hour, now->tm_min, now->tm_sec);
+        std::time_t t2 = std::time(0);
+        std::tm *finish = std::localtime(&t2);
+        printf("Finish time: %d:%d:%d\n", finish->tm_hour, finish->tm_min, finish->tm_sec);
+
+        std::time_t t3 = t2 - t1;
+        std::tm *compute = std::localtime(&t3);
+        printf("Compute time: %d:%d:%d\n", (compute->tm_hour - 1), compute->tm_min, compute->tm_sec);
         return 0;
     }
 
