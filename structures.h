@@ -37,6 +37,9 @@ struct Object
 struct Box
 {
     Vec3F lb, rt;
+    std::vector<Box> boxs;
+    int depth;
+    std::vector<Object> objects;
 };
 
 struct Ray

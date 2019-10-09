@@ -111,13 +111,13 @@ bool intersect_box(Ray ray, Box box)
     return true;
 }
 
-bool intersect_scene(Ray ray, Objects objects, Intersection &intersection)
+bool intersect_scene(Ray ray, Box box, Intersection &intersection)
 {
     Intersections intersections;
-    size_t object_count = objects.size();
+    size_t object_count = box.objects.size();
     for (unsigned int k = 0; k < object_count; k++)
     {
-        Object obj = objects.at(k);
+        Object obj = box.objects.at(k);
         switch (obj.geom.type)
         {
         case TRIANGLE:
@@ -229,7 +229,7 @@ Vec3F shade(Vec3F n, Vec3F v, Vec3F l, Vec3F lc, Material mat)
     return lc * bsdf * LdotN;
 }
 
-Vec3F trace_ray(Objects objects, Light &light, Ray ray, Boxs boxs)
+Vec3F trace_ray(Objects objects, Light &light, Ray ray, Boxs &boxs)
 {
     Vec3F color, ret;
     color = ret = {0.f, 0.f, 0.f};
@@ -237,9 +237,35 @@ Vec3F trace_ray(Objects objects, Light &light, Ray ray, Boxs boxs)
     size_t boxs_count = boxs.size();
     for (unsigned int b = 0; b < boxs_count; b++)
     {
-        if (intersect_box(ray, boxs.at(b)))
+        Box cur_box = boxs.at(b);
+        if (intersect_box(ray, cur_box))
         {
-            if (intersect_scene(ray, objects, intersection))
+            if (cur_box.depth < 10)
+            {
+                Box new_box1, new_box2;
+                float longueur = cur_box.rt.x - cur_box.lb.x;
+                float hauteur = cur_box.rt.y - cur_box.lb.y;
+                if (longueur > hauteur)
+                {
+                    new_box1.lb = cur_box.lb;
+                    new_box1.rt = {cur_box.lb.x + longueur / 2, cur_box.rt.y, cur_box.rt.z};
+                    new_box2.lb = {new_box1.rt.x, cur_box.lb.y, cur_box.lb.z};
+                    new_box2.rt = cur_box.rt;
+                }
+                else
+                {
+                    new_box1.lb = cur_box.lb;
+                    new_box1.rt = {cur_box.rt.x, cur_box.lb.y + hauteur / 2, cur_box.rt.z};
+                    new_box2.lb = {cur_box.lb.x, new_box1.rt.y, cur_box.lb.z};
+                    new_box2.rt = cur_box.rt;
+                }
+                new_box1.depth = cur_box.depth + 1;
+                new_box2.depth = new_box1.depth;
+                cur_box.boxs.push_back(new_box1);
+                cur_box.boxs.push_back(new_box2);
+                return trace_ray(objects, light, ray, cur_box.boxs);
+            }
+            if (intersect_scene(ray, cur_box, intersection))
             {
                 for (int k = 0; k < NB_LIGHTS; k++)
                 {
@@ -250,7 +276,7 @@ Vec3F trace_ray(Objects objects, Light &light, Ray ray, Boxs boxs)
                     ray_shadow.origin = intersection.position;
                     ray_shadow.direction = normalize(light.position - intersection.position);
                     Intersection inter_shadow;
-                    if (!intersect_scene(ray_shadow, objects, inter_shadow) || inter_shadow.position.x < 0.f || inter_shadow.position.x > 1000.f || inter_shadow.position.y < 0.f || inter_shadow.position.y > 1000.f || inter_shadow.position.z < 0.f || inter_shadow.position.z > 1000.f)
+                    if (!intersect_scene(ray_shadow, cur_box, inter_shadow) || inter_shadow.position.x < 0.f || inter_shadow.position.x > 1000.f || inter_shadow.position.y < 0.f || inter_shadow.position.y > 1000.f || inter_shadow.position.z < 0.f || inter_shadow.position.z > 1000.f)
                     {
                         Vec3F inv = ray.direction * -1.f;
                         color = color + (shade(intersection.normale, inv, ray_shadow.direction, light.color, intersection.object.material) / (float)NB_LIGHTS * 20.f);
@@ -281,7 +307,7 @@ Vec3F trace_ray(Objects objects, Light &light, Ray ray, Boxs boxs)
     return ret;
 }
 
-int render_image(Objects objects, Light light, Boxs boxs)
+int render_image(Objects objects, Light light, Boxs &boxs)
 {
     /* Initialisation de l'image */
 
@@ -297,7 +323,7 @@ int render_image(Objects objects, Light light, Boxs boxs)
 
     for (int j = 0; j < HEIGHT; j++)
     {
-#pragma omp parallel for
+        #pragma omp parallel for
         for (int i = 0; i < WIDTH; i++)
         {
             Ray ray;
@@ -396,6 +422,7 @@ void create_mesh(Objects &objects, Vertices &vertices, Facades facades, Material
 
     box.lb = {x_min, y_min, z_min};
     box.rt = {x_max, y_max, z_max};
+    box.depth = 0;
     boxs.push_back(box);
 }
 
