@@ -229,7 +229,7 @@ Vec3F shade(Vec3F n, Vec3F v, Vec3F l, Vec3F lc, Material mat)
     return lc * bsdf * LdotN;
 }
 
-Vec3F trace_ray(Objects objects, Light &light, Ray ray, Boxs &boxs)
+Vec3F trace_ray(Light &light, Ray ray, Boxs &boxs)
 {
     Vec3F color, ret;
     color = ret = {0.f, 0.f, 0.f};
@@ -240,31 +240,6 @@ Vec3F trace_ray(Objects objects, Light &light, Ray ray, Boxs &boxs)
         Box cur_box = boxs.at(b);
         if (intersect_box(ray, cur_box))
         {
-            if (cur_box.depth < 10)
-            {
-                Box new_box1, new_box2;
-                float longueur = cur_box.rt.x - cur_box.lb.x;
-                float hauteur = cur_box.rt.y - cur_box.lb.y;
-                if (longueur > hauteur)
-                {
-                    new_box1.lb = cur_box.lb;
-                    new_box1.rt = {cur_box.lb.x + longueur / 2, cur_box.rt.y, cur_box.rt.z};
-                    new_box2.lb = {new_box1.rt.x, cur_box.lb.y, cur_box.lb.z};
-                    new_box2.rt = cur_box.rt;
-                }
-                else
-                {
-                    new_box1.lb = cur_box.lb;
-                    new_box1.rt = {cur_box.rt.x, cur_box.lb.y + hauteur / 2, cur_box.rt.z};
-                    new_box2.lb = {cur_box.lb.x, new_box1.rt.y, cur_box.lb.z};
-                    new_box2.rt = cur_box.rt;
-                }
-                new_box1.depth = cur_box.depth + 1;
-                new_box2.depth = new_box1.depth;
-                cur_box.boxs.push_back(new_box1);
-                cur_box.boxs.push_back(new_box2);
-                return trace_ray(objects, light, ray, cur_box.boxs);
-            }
             if (intersect_scene(ray, cur_box, intersection))
             {
                 for (int k = 0; k < NB_LIGHTS; k++)
@@ -290,7 +265,7 @@ Vec3F trace_ray(Objects objects, Light &light, Ray ray, Boxs &boxs)
                     ray_reflect.origin = intersection.position + dir_ray_reflect * acne;
                     ray_reflect.direction = dir_ray_reflect;
                     ray_reflect.depth = ray.depth + 1;
-                    Vec3F color_reflect = trace_ray(objects, light, ray_reflect, boxs);
+                    Vec3F color_reflect = trace_ray(light, ray_reflect, boxs);
                     ret = color + intersection.object.material.specularColor * RDM_Fresnel(dot(ray_reflect.direction, intersection.normale), 1.f, intersection.object.material.IOR) * color_reflect;
                 }
                 else
@@ -307,7 +282,7 @@ Vec3F trace_ray(Objects objects, Light &light, Ray ray, Boxs &boxs)
     return ret;
 }
 
-int render_image(Objects objects, Light light, Boxs &boxs)
+int render_image(Boxs &boxs, Light light)
 {
     /* Initialisation de l'image */
 
@@ -331,7 +306,7 @@ int render_image(Objects objects, Light light, Boxs &boxs)
             ray.direction = normalize(ray.origin - camera);
             ray.depth = 0;
 
-            Vec3F color = trace_ray(objects, light, ray, boxs);
+            Vec3F color = trace_ray(light, ray, boxs);
 
             RGBQUAD colorPixel;
             colorPixel.rgbRed = clamp_color(color.x);
@@ -340,7 +315,7 @@ int render_image(Objects objects, Light light, Boxs &boxs)
             FreeImage_SetPixelColor(bitmap, i, j, &colorPixel);
         }
         if ((j + 1) % 10 == 0)
-            printf("Rendering image... %d %%\r", ((j + 1) / 10));
+            printf("Rendering image... %d %%\n", ((j + 1) / 10));
     }
 
     /* Écriture de l'image */
@@ -352,10 +327,9 @@ int render_image(Objects objects, Light light, Boxs &boxs)
     return 0;
 }
 
-void create_mesh(Objects &objects, Vertices &vertices, Facades facades, Material material, Boxs &boxs)
+void create_mesh(Vertices &vertices, Facades facades, Material material, Boxs &boxs)
 {
     float taille = 500.f;
-    Box box;
     float x_min = vertices.at(0).x;
     float y_min = vertices.at(0).y;
     float z_min = vertices.at(0).z;
@@ -397,7 +371,22 @@ void create_mesh(Objects &objects, Vertices &vertices, Facades facades, Material
     for (unsigned int i = 0; i < vertices_count; i++)
         vertices.at(i) = vertices.at(i) / norm_max;
 
-    /* Création des triangles */
+    /* Création de la boîte englobante */
+
+    x_min = x_min / norm_max + offset.x;
+    y_min = y_min / norm_max + offset.y;
+    z_min = z_min / norm_max + offset.z;
+    x_max = x_max / norm_max + offset.x;
+    y_max = y_max / norm_max + offset.y;
+    z_max = z_max / norm_max + offset.z;
+
+	Box box;
+    box.lb = {x_min, y_min, z_min};
+    box.rt = {x_max, y_max, z_max};
+    box.depth = 0;
+	Objects objects;
+
+	/* Création des triangles */
 
     size_t facades_count = facades.size();
     for (unsigned int i = 0; i < facades_count; i++)
@@ -411,22 +400,11 @@ void create_mesh(Objects &objects, Vertices &vertices, Facades facades, Material
         objects.push_back(triangle);
     }
 
-    /* Création de la boîte englobante */
-
-    x_min = x_min / norm_max + offset.x;
-    y_min = y_min / norm_max + offset.y;
-    z_min = z_min / norm_max + offset.z;
-    x_max = x_max / norm_max + offset.x;
-    y_max = y_max / norm_max + offset.y;
-    z_max = z_max / norm_max + offset.z;
-
-    box.lb = {x_min, y_min, z_min};
-    box.rt = {x_max, y_max, z_max};
-    box.depth = 0;
+	box.objects = objects;
     boxs.push_back(box);
 }
 
-void init_scene(Objects &objects, Light &light, Vertices &vertices, Facades &facades, Boxs &boxs)
+void init_scene(Light &light, Vertices &vertices, Facades &facades, Boxs &boxs)
 {
     /* Matériaux */
 
@@ -487,7 +465,7 @@ void init_scene(Objects &objects, Light &light, Vertices &vertices, Facades &fac
 
     /* Triangles */
 
-    create_mesh(objects, vertices, facades, mat_white, boxs);
+    create_mesh(vertices, facades, mat_white, boxs);
 
     /* Murs */
 
@@ -534,19 +512,18 @@ int main()
     std::time_t t1 = std::time(0);
     std::tm *start = std::localtime(&t1);
     printf("Start time: %d:%d:%d\n", start->tm_hour, start->tm_min, start->tm_sec);
-
+	
     printf("Rendering image... 0 %%\r");
 
     if (!parse("meshs/bunny.off", vertices, facades))
         return 1;
-
-    Objects objects;
+	
     Light light;
     Boxs boxs;
 
-    init_scene(objects, light, vertices, facades, boxs);
-
-    if (render_image(objects, light, boxs) == 0)
+    init_scene(light, vertices, facades, boxs);
+	
+    if (render_image(boxs, light) == 0)
     {
         std::time_t t2 = std::time(0);
         std::tm *finish = std::localtime(&t2);
