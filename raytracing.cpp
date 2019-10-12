@@ -320,7 +320,7 @@ int render_image(Boxs &boxs, Light &light)
 		}
 		if ((j + 1) % 10 == 0)
 		{
-			printf("Rendering image... %d %%\n", ((j + 1) / 10));
+			printf("Rendering image... %d %%\r", ((j + 1) / 10));
 		}
 	}
 
@@ -335,7 +335,7 @@ int render_image(Boxs &boxs, Light &light)
 
 void create_mesh(Vertices &vertices, Facades &facades, Material &material, Boxs &boxs)
 {
-	float taille = 500.f;
+	float taille = 1000.f;
 	float x_min = vertices.at(0).x;
 	float y_min = vertices.at(0).y;
 	float z_min = vertices.at(0).z;
@@ -429,10 +429,15 @@ void create_boxs(Boxs &boxs)
 				new_box2.rt = boxs.at(b).rt;
 				for (unsigned int o = 0; o < objects_count; o++)
 				{
-					if (boxs.at(b).objects.at(o).geom.triangle.v0.x < new_box1.rt.x)
+					if (boxs.at(b).objects.at(o).geom.triangle.v0.x < new_box1.rt.x && boxs.at(b).objects.at(o).geom.triangle.v1.x < new_box1.rt.x && boxs.at(b).objects.at(o).geom.triangle.v2.x < new_box1.rt.x)
 						new_box1.objects.push_back(boxs.at(b).objects.at(o));
-					else
+					else if (boxs.at(b).objects.at(o).geom.triangle.v0.x > new_box1.rt.x && boxs.at(b).objects.at(o).geom.triangle.v1.x > new_box1.rt.x && boxs.at(b).objects.at(o).geom.triangle.v2.x > new_box1.rt.x)
 						new_box2.objects.push_back(boxs.at(b).objects.at(o));
+					else
+					{
+						new_box1.objects.push_back(boxs.at(b).objects.at(o));
+						new_box2.objects.push_back(boxs.at(b).objects.at(o));
+					}
 				}
 			}
 			else
@@ -443,10 +448,15 @@ void create_boxs(Boxs &boxs)
 				new_box2.rt = boxs.at(b).rt;
 				for (unsigned int o = 0; o < objects_count; o++)
 				{
-					if (boxs.at(b).objects.at(o).geom.triangle.v0.y < new_box1.rt.y)
+					if (boxs.at(b).objects.at(o).geom.triangle.v0.y < new_box1.rt.y && boxs.at(b).objects.at(o).geom.triangle.v1.y < new_box1.rt.y && boxs.at(b).objects.at(o).geom.triangle.v2.y < new_box1.rt.y)
 						new_box1.objects.push_back(boxs.at(b).objects.at(o));
-					else
+					else if (boxs.at(b).objects.at(o).geom.triangle.v0.y > new_box1.rt.y && boxs.at(b).objects.at(o).geom.triangle.v1.y > new_box1.rt.y && boxs.at(b).objects.at(o).geom.triangle.v2.y > new_box1.rt.y)
 						new_box2.objects.push_back(boxs.at(b).objects.at(o));
+					else
+					{
+						new_box1.objects.push_back(boxs.at(b).objects.at(o));
+						new_box2.objects.push_back(boxs.at(b).objects.at(o));
+					}
 				}
 			}
 			new_box1.depth = boxs.at(b).depth + 1;
@@ -513,7 +523,9 @@ void init_scene(Light &light, Vertices &vertices, Facades &facades, Boxs &boxs)
 	// box_sphere_nickel.rt = {sphere_nickel.geom.sphere.position.x + sphere_nickel.geom.sphere.radius, sphere_nickel.geom.sphere.position.y + sphere_nickel.geom.sphere.radius, sphere_nickel.geom.sphere.position.z + sphere_nickel.geom.sphere.radius};
 	// box_sphere_white.lb = {sphere_white.geom.sphere.position.x - sphere_white.geom.sphere.radius, sphere_white.geom.sphere.position.y - sphere_white.geom.sphere.radius, sphere_white.geom.sphere.position.z - sphere_white.geom.sphere.radius};
 	// box_sphere_white.rt = {sphere_white.geom.sphere.position.x + sphere_white.geom.sphere.radius, sphere_white.geom.sphere.position.y + sphere_white.geom.sphere.radius, sphere_white.geom.sphere.position.z + sphere_white.geom.sphere.radius};
-
+	// box_sphere_nickel.depth = box_sphere_white.depth = 0;
+	// box_sphere_nickel.objects.push_back(sphere_nickel);
+	// box_sphere_white.objects.push_back(sphere_white);
 	// boxs.push_back(box_sphere_nickel);
 	// boxs.push_back(box_sphere_white);
 
@@ -569,7 +581,7 @@ int main()
 	std::tm *start = std::localtime(&t1);
 	printf("Start time: %d:%d:%d\n", start->tm_hour, start->tm_min, start->tm_sec);
 
-	printf("Rendering image... 0 %%\n");
+	printf("Rendering image... 0 %%\r");
 
 	if (!parse("meshs/bunny.off", vertices, facades))
 		return 1;
