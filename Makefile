@@ -4,7 +4,7 @@ LDLIBS=-lfreeimage -fopenmp
 OBJ=raytracing.cpp
 EXEC=raytracing.exe
 
-all: $(EXEC)
+all: clean $(EXEC)
 
 $(EXEC):
 	$(CC) $(CFLAGS) $(OBJ) -o $(EXEC) $(LDLIBS)
