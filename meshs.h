@@ -1,48 +1,45 @@
-typedef std::vector<Vec3F> Vertices;
-typedef std::vector<Vec3F> Facades;
-
-void create_mesh(Vertices &vertices, Facades &facades, Material &material, Boxs &boxs, Vec3F &position, float taille)
+void create_mesh(Mesh &mesh, Boxs &boxs)
 {
-	float x_min = vertices.at(0).x;
-	float y_min = vertices.at(0).y;
-	float z_min = vertices.at(0).z;
-	float x_max = vertices.at(0).x;
-	float y_max = vertices.at(0).y;
-	float z_max = vertices.at(0).z;
+	float x_min = mesh.vertices.at(0).x;
+	float y_min = mesh.vertices.at(0).y;
+	float z_min = mesh.vertices.at(0).z;
+	float x_max = mesh.vertices.at(0).x;
+	float y_max = mesh.vertices.at(0).y;
+	float z_max = mesh.vertices.at(0).z;
 
 	/* Centrer l'objet */
 
-	Vec3F somme_vertices = vertices.at(0);
-	size_t vertices_count = vertices.size();
-	float norm_max = norm(vertices.at(0));
+	Vec3F somme_vertices = mesh.vertices.at(0);
+	size_t vertices_count = mesh.vertices.size();
+	float norm_max = norm(mesh.vertices.at(0));
 	for (unsigned int i = 1; i < vertices_count; i++)
 	{
-		somme_vertices = somme_vertices + vertices.at(i);
-		if (norm(vertices.at(i)) > norm_max)
-			norm_max = norm(vertices.at(i));
-		if (vertices.at(i).x < x_min)
-			x_min = vertices.at(i).x;
-		if (vertices.at(i).y < y_min)
-			y_min = vertices.at(i).y;
-		if (vertices.at(i).z < z_min)
-			z_min = vertices.at(i).z;
-		if (vertices.at(i).x > x_max)
-			x_max = vertices.at(i).x;
-		if (vertices.at(i).y > y_max)
-			y_max = vertices.at(i).y;
-		if (vertices.at(i).z > z_max)
-			z_max = vertices.at(i).z;
+		somme_vertices = somme_vertices + mesh.vertices.at(i);
+		if (norm(mesh.vertices.at(i)) > norm_max)
+			norm_max = norm(mesh.vertices.at(i));
+		if (mesh.vertices.at(i).x < x_min)
+			x_min = mesh.vertices.at(i).x;
+		if (mesh.vertices.at(i).y < y_min)
+			y_min = mesh.vertices.at(i).y;
+		if (mesh.vertices.at(i).z < z_min)
+			z_min = mesh.vertices.at(i).z;
+		if (mesh.vertices.at(i).x > x_max)
+			x_max = mesh.vertices.at(i).x;
+		if (mesh.vertices.at(i).y > y_max)
+			y_max = mesh.vertices.at(i).y;
+		if (mesh.vertices.at(i).z > z_max)
+			z_max = mesh.vertices.at(i).z;
 	}
-	norm_max /= taille;
+	norm_max /= mesh.taille;
 
 	Vec3F centre_gravite = somme_vertices / (float)vertices_count;
-	Vec3F offset = position;
+	Vec3F offset = mesh.position;
 	offset = offset - (centre_gravite / norm_max);
 
 	/* Normaliser sa taille */
 
 	for (unsigned int i = 0; i < vertices_count; i++)
-		vertices.at(i) = vertices.at(i) / norm_max;
+		mesh.vertices.at(i) = mesh.vertices.at(i) / norm_max;
 
 	/* Création de la boîte englobante */
 
@@ -61,15 +58,15 @@ void create_mesh(Vertices &vertices, Facades &facades, Material &material, Boxs 
 
 	/* Création des triangles */
 
-	size_t facades_count = facades.size();
+	size_t facades_count = mesh.facades.size();
 	for (unsigned int i = 0; i < facades_count; i++)
 	{
 		Object triangle;
-		triangle.material = material;
+		triangle.material = mesh.material;
 		triangle.geom.type = TRIANGLE;
-		triangle.geom.triangle.v0 = vertices.at((int)facades.at(i).x) + offset;
-		triangle.geom.triangle.v1 = vertices.at((int)facades.at(i).y) + offset;
-		triangle.geom.triangle.v2 = vertices.at((int)facades.at(i).z) + offset;
+		triangle.geom.triangle.v0 = mesh.vertices.at((int)mesh.facades.at(i).x) + offset;
+		triangle.geom.triangle.v1 = mesh.vertices.at((int)mesh.facades.at(i).y) + offset;
+		triangle.geom.triangle.v2 = mesh.vertices.at((int)mesh.facades.at(i).z) + offset;
 		objects.push_back(triangle);
 	}
 
@@ -79,7 +76,7 @@ void create_mesh(Vertices &vertices, Facades &facades, Material &material, Boxs 
 
 /* Parser */
 
-bool parse(std::string filename, Vertices &vertices, Facades &facades)
+bool parse(std::string filename, Mesh &mesh)
 {
 	int nv, nf;
 
@@ -124,7 +121,7 @@ bool parse(std::string filename, Vertices &vertices, Facades &facades)
 		v.y = (float)atof(readLine.substr(delimiterPos_1, delimiterPos_2).c_str());
 		delimiterPos_3 = (int)readLine.find(" ", delimiterPos_2 + 1);
 		v.z = (float)atof(readLine.substr(delimiterPos_2, delimiterPos_3).c_str());
-		vertices.push_back(v);
+		mesh.vertices.push_back(v);
 	}
 
 	/* Façades */
@@ -140,7 +137,7 @@ bool parse(std::string filename, Vertices &vertices, Facades &facades)
 		f.y = (float)atof(readLine.substr(delimiterPos_2, delimiterPos_3).c_str());
 		delimiterPos_4 = (int)readLine.find(" ", delimiterPos_3 + 1);
 		f.z = (float)atof(readLine.substr(delimiterPos_3, delimiterPos_4).c_str());
-		facades.push_back(f);
+		mesh.facades.push_back(f);
 	}
 
 	return true;

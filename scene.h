@@ -1,7 +1,7 @@
 #include "bvh.h"
 #include "meshs.h"
 
-void init_scene(Light &light, Vertices &vertices, Facades &facades, Boxs &boxs)
+bool init_scene(Light &light, Boxs &boxs)
 {
 	/* Matériaux */
 
@@ -73,13 +73,29 @@ void init_scene(Light &light, Vertices &vertices, Facades &facades, Boxs &boxs)
 	light.position = {250.f, 950.f, 200.f};
 	light.color = {255.f, 255.f, 255.f};
 
-	/* Triangles */
+	/* Meshs */
 
-	Vec3F position = {500.f, 750.f, 500.f};
+	Mesh bunny, dino;
 
-	create_mesh(vertices, facades, mat_white, boxs, position, 500.f);
+	bunny.position = {500.f, 750.f, 500.f};
+	bunny.taille = 500.f;
+	bunny.material = mat_white;
+
+	dino.position = {500.f, 250.f, 500.f};
+	dino.taille = 500.f;
+	dino.material = mat_white;
+
+	if (!parse("meshs/bunny.off", bunny))
+		return false;
+	create_mesh(bunny, boxs);
+
+	if (!parse("meshs/dino.off", dino))
+		return false;
+	create_mesh(dino, boxs);
 
 	/* Boîtes */
 
 	create_boxs(boxs);
+
+	return true;
 }

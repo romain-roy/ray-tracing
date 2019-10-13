@@ -19,8 +19,8 @@
 
 /* Ray tracing settings */
 
-#define MAX_DEPTH 0  // Nombre de rebonds des rayons de lumière
-#define NB_LIGHTS 1  // Nombre de rayons de lumière par lampe
+#define MAX_DEPTH 0 // Nombre de rebonds des rayons de lumière
+#define NB_LIGHTS 1 // Nombre de rayons de lumière par lampe
 
 const float acne = 0.0001f;
 
@@ -86,7 +86,7 @@ Vec3F trace_ray(Light &light, Ray &ray, Boxs &boxs)
 	return ret;
 }
 
-int render_image(Boxs &boxs, Light &light)
+bool render_image(Boxs &boxs, Light &light)
 {
 	/* Initialisation de l'image */
 
@@ -130,14 +130,11 @@ int render_image(Boxs &boxs, Light &light)
 		printf("\nImage successfully saved!\n");
 	FreeImage_DeInitialise();
 
-	return 0;
+	return true;
 }
 
 int main()
 {
-	Vertices vertices;
-	Facades facades;
-
 	printf("RAY TRACING by Romain Roy\n-------------------------\n");
 
 	std::time_t t1 = std::time(0);
@@ -146,15 +143,13 @@ int main()
 
 	printf("Rendering image... 0 %%\r");
 
-	if (!parse("meshs/bunny.off", vertices, facades))
-		return 1;
-
 	Light light;
 	Boxs boxs;
 
-	init_scene(light, vertices, facades, boxs);
+	if (!init_scene(light, boxs))
+		return 1;
 
-	if (render_image(boxs, light) == 0)
+	if (render_image(boxs, light))
 	{
 		std::time_t t2 = std::time(0);
 		std::tm *finish = std::localtime(&t2);
