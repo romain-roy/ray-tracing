@@ -1,7 +1,7 @@
 typedef std::vector<Vec3F> Vertices;
 typedef std::vector<Vec3F> Facades;
 
-void create_mesh(Vertices &vertices, Facades &facades, Material &material, Boxs &boxs, float taille)
+void create_mesh(Vertices &vertices, Facades &facades, Material &material, Boxs &boxs, Vec3F &position, float taille)
 {
 	float x_min = vertices.at(0).x;
 	float y_min = vertices.at(0).y;
@@ -36,7 +36,7 @@ void create_mesh(Vertices &vertices, Facades &facades, Material &material, Boxs 
 	norm_max /= taille;
 
 	Vec3F centre_gravite = somme_vertices / (float)vertices_count;
-	Vec3F offset = {500.f, 500.f, 500.f};
+	Vec3F offset = position;
 	offset = offset - (centre_gravite / norm_max);
 
 	/* Normaliser sa taille */

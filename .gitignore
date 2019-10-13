@@ -1,6 +1,9 @@
 # Visual Studio Code Properties
 /.vscode/
 
+# FreeImage Library
+/FreeImage/
+
 # Executable
 *.exe
 

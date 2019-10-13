@@ -75,7 +75,9 @@ void init_scene(Light &light, Vertices &vertices, Facades &facades, Boxs &boxs)
 
 	/* Triangles */
 
-	create_mesh(vertices, facades, mat_white, boxs, 500.f);
+	Vec3F position = {500.f, 750.f, 500.f};
+
+	create_mesh(vertices, facades, mat_white, boxs, position, 500.f);
 
 	/* Boîtes */
 
