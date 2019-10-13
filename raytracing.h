@@ -1,8 +1,5 @@
-#include <ctime>
 #include <random>
 #include <math.h>
-#include <fstream>
-#include <iostream>
 
 #include "vec3.h"
 #include "utils.h"
@@ -86,7 +83,7 @@ Vec3F trace_ray(Light &light, Ray &ray, Boxs &boxs)
 	return ret;
 }
 
-bool render_image(Boxs &boxs, Light &light)
+bool render_image(Light &light, Boxs &boxs)
 {
 	/* Initialisation de l'image */
 
@@ -131,35 +128,4 @@ bool render_image(Boxs &boxs, Light &light)
 	FreeImage_DeInitialise();
 
 	return true;
-}
-
-int main()
-{
-	printf("RAY TRACING by Romain Roy\n-------------------------\n");
-
-	std::time_t t1 = std::time(0);
-	std::tm *start = std::localtime(&t1);
-	printf("Start time: %d:%d:%d\n", start->tm_hour, start->tm_min, start->tm_sec);
-
-	printf("Rendering image... 0 %%\r");
-
-	Light light;
-	Boxs boxs;
-
-	if (!init_scene(light, boxs))
-		return 1;
-
-	if (render_image(boxs, light))
-	{
-		std::time_t t2 = std::time(0);
-		std::tm *finish = std::localtime(&t2);
-		printf("Finish time: %d:%d:%d\n", finish->tm_hour, finish->tm_min, finish->tm_sec);
-
-		std::time_t t3 = t2 - t1;
-		std::tm *compute = std::localtime(&t3);
-		printf("Compute time: %d:%d:%d\n", (compute->tm_hour - 1), compute->tm_min, compute->tm_sec);
-		return 0;
-	}
-
-	return 1;
 }
