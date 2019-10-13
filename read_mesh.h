@@ -1,6 +1,3 @@
-#include <iostream>
-#include <fstream>
-
 int nv, nf;
 
 typedef std::vector<Vec3F> Vertices;
