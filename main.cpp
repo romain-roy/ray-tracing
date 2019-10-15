@@ -6,31 +6,31 @@
 
 int main()
 {
-	printf("RAY TRACING by Romain Roy\n-------------------------\n");
+    printf("RAY TRACING by Romain Roy\n-------------------------\n");
 
-	std::time_t t1 = std::time(0);
-	std::tm *start = std::localtime(&t1);
-	printf("Start time: %d:%d:%d\n", start->tm_hour, start->tm_min, start->tm_sec);
+    Light light;
+    Boxs boxs;
 
-	printf("Rendering image... 0 %%\r");
+    if (!init_scene(light, boxs))
+        return 1;
 
-	Light light;
-	Boxs boxs;
+    std::time_t t1 = std::time(0);
+    std::tm *start = std::localtime(&t1);
+    printf("Start time: %d:%d:%d\n", start->tm_hour, start->tm_min, start->tm_sec);
 
-	if (!init_scene(light, boxs))
-		return 1;
+    printf("Rendering image... 0 %%\r");
 
-	if (render_image(light, boxs))
-	{
-		std::time_t t2 = std::time(0);
-		std::tm *finish = std::localtime(&t2);
-		printf("Finish time: %d:%d:%d\n", finish->tm_hour, finish->tm_min, finish->tm_sec);
+    if (render_image(light, boxs))
+    {
+        std::time_t t2 = std::time(0);
+        std::tm *finish = std::localtime(&t2);
+        printf("Finish time: %d:%d:%d\n", finish->tm_hour, finish->tm_min, finish->tm_sec);
 
-		std::time_t t3 = t2 - t1;
-		std::tm *compute = std::localtime(&t3);
-		printf("Compute time: %d:%d:%d\n", (compute->tm_hour - 1), compute->tm_min, compute->tm_sec);
-		return 0;
-	}
+        std::time_t t3 = t2 - t1;
+        std::tm *compute = std::localtime(&t3);
+        printf("Compute time: %d:%d:%d\n", (compute->tm_hour - 1), compute->tm_min, compute->tm_sec);
+        return 0;
+    }
 
-	return 1;
+    return 1;
 }

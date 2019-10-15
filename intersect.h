@@ -66,7 +66,7 @@ bool intersect_triangle(Ray &ray, Object &object, Intersection &intersection)
 	}
 }
 
-bool intersect_box(Ray &ray, Box &box)
+bool intersect_box(Ray &ray, Box &box, Intersection &intersection)
 {
 	Vec3F dir_frac;
 	dir_frac.x = 1.f / ray.direction.x;
@@ -88,6 +88,7 @@ bool intersect_box(Ray &ray, Box &box)
 	{
 		return false;
 	}
+    intersection.distance = tmin;
 	return true;
 }
 
