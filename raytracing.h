@@ -34,19 +34,15 @@ Vec3F trace_ray(Light &light, Ray &ray, Boxs &boxs)
     size_t boxs_count = boxs.size();
     for (unsigned int b = 0; b < boxs_count; b++)
     {
-        Intersection inter_box;
+        Intersection inter_box, intersection;
         if (intersect_box(ray, boxs.at(b), inter_box))
         {
             if (boxs.at(b).depth < DEPTH_BOX)
             {
                 Vec3F ret_temp = trace_ray(light, ray, boxs.at(b).boxs);
                 Vec3F noir = {0.f, 0.f, 0.f};
-                if (noir - ret == noir)
-                    ret = ret_temp;
-                continue;
-            }
-            Intersection intersection;
-            if (intersect_scene(ray, boxs.at(b), intersection))
+                if (ret == noir) ret = ret_temp;
+            } else if (inter_box.position.z < 500.f && intersect_scene(ray, boxs.at(b), intersection))
             {
                 for (int k = 0; k < NB_LIGHTS; k++)
                 {
@@ -61,10 +57,6 @@ Vec3F trace_ray(Light &light, Ray &ray, Boxs &boxs)
                     {
                         Vec3F inv = ray.direction * -1.f;
                         color = color + (shade(intersection.normale, inv, ray_shadow.direction, light.color, intersection.object.material) / (float)NB_LIGHTS * 20.f);
-                        // Vec3F blanc = {255.f, 255.f, 255.f};
-                        // Vec3F inv = ray.direction * -1.f;
-                        // float cos = dot(intersection.normale, ray_shadow.direction);
-                        // color = color + (blanc * cos);
                     }
                 }
                 if (ray.depth < MAX_DEPTH)
