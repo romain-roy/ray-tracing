@@ -1,6 +1,6 @@
 #include "structs.h"
 
-const float PI = (float)atan(1.f) * 4.f;
+const float PI = (float)atan(1.f) * 4.f; // Parce que l'éditeur n'aime pas M_PI
 
 /* Distribution sur matériaux rugueux */
 

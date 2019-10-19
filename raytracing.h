@@ -2,7 +2,6 @@
 #include <math.h>
 
 #include "vec3.h"
-#include "utils.h"
 #include "shade.h"
 #include "scene.h"
 #include "intersect.h"
@@ -53,7 +52,7 @@ Vec3F trace_ray(Light &light, Ray &ray, Boxs &boxs)
                     ray_shadow.origin = intersection.position;
                     ray_shadow.direction = normalize(light.position - intersection.position);
                     Intersection inter_shadow;
-                    if (!intersect_scene(ray_shadow, boxs.at(b), inter_shadow) || inter_shadow.position.x < 0.f || inter_shadow.position.x > 1000.f || inter_shadow.position.y < 0.f || inter_shadow.position.y > 1000.f || inter_shadow.position.z < 0.f || inter_shadow.position.z > 1000.f)
+                    if (!intersect_scene(ray_shadow, boxs.at(b), inter_shadow) || coord_out_of_scene(inter_shadow.position))
                     {
                         Vec3F inv = ray.direction * -1.f;
                         color = color + (shade(intersection.normale, inv, ray_shadow.direction, light.color, intersection.object.material) / (float)NB_LIGHTS * 20.f);
@@ -100,7 +99,7 @@ bool render_image(Light &light, Boxs &boxs)
 
     for (int j = 0; j < HEIGHT; j++)
     {
-#pragma omp parallel for
+		#pragma omp parallel for
         for (int i = 0; i < WIDTH; i++)
         {
             Ray ray;

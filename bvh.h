@@ -1,14 +1,6 @@
+#include "utils.h"
+
 #define DEPTH_BOX 10 // Nombre de sous-boîtes englobantes
-
-struct Box
-{
-	Vec3F lb, rt;
-	std::vector<Box> boxs;
-	int depth;
-	std::vector<Object> objects;
-};
-
-typedef std::vector<Box> Boxs;
 
 void create_boxs(Boxs &boxs)
 {
@@ -29,9 +21,9 @@ void create_boxs(Boxs &boxs)
 				new_box2.rt = boxs.at(b).rt;
 				for (unsigned int o = 0; o < objects_count; o++)
 				{
-					if (boxs.at(b).objects.at(o).geom.triangle.v0.x < new_box1.rt.x && boxs.at(b).objects.at(o).geom.triangle.v1.x < new_box1.rt.x && boxs.at(b).objects.at(o).geom.triangle.v2.x < new_box1.rt.x)
+					if (triangle_inf_x(boxs.at(b).objects.at(o), new_box1.rt.x))
 						new_box1.objects.push_back(boxs.at(b).objects.at(o));
-					else if (boxs.at(b).objects.at(o).geom.triangle.v0.x > new_box1.rt.x && boxs.at(b).objects.at(o).geom.triangle.v1.x > new_box1.rt.x && boxs.at(b).objects.at(o).geom.triangle.v2.x > new_box1.rt.x)
+					else if (triangle_sup_x(boxs.at(b).objects.at(o), new_box1.rt.x))
 						new_box2.objects.push_back(boxs.at(b).objects.at(o));
 					else
 					{
@@ -48,9 +40,9 @@ void create_boxs(Boxs &boxs)
 				new_box2.rt = boxs.at(b).rt;
 				for (unsigned int o = 0; o < objects_count; o++)
 				{
-					if (boxs.at(b).objects.at(o).geom.triangle.v0.y < new_box1.rt.y && boxs.at(b).objects.at(o).geom.triangle.v1.y < new_box1.rt.y && boxs.at(b).objects.at(o).geom.triangle.v2.y < new_box1.rt.y)
+					if (triangle_inf_y(boxs.at(b).objects.at(o), new_box1.rt.y))
 						new_box1.objects.push_back(boxs.at(b).objects.at(o));
-					else if (boxs.at(b).objects.at(o).geom.triangle.v0.y > new_box1.rt.y && boxs.at(b).objects.at(o).geom.triangle.v1.y > new_box1.rt.y && boxs.at(b).objects.at(o).geom.triangle.v2.y > new_box1.rt.y)
+					else if (triangle_sup_y(boxs.at(b).objects.at(o), new_box1.rt.y))
 						new_box2.objects.push_back(boxs.at(b).objects.at(o));
 					else
 					{

@@ -4,7 +4,15 @@ enum Type
 	TRIANGLE
 };
 
-struct Geometry
+struct Material
+{
+	float IOR;
+	float roughness;
+	Vec3F specularColor;
+	Vec3F diffuseColor;
+};
+
+struct Object
 {
 	Type type;
 	union {
@@ -18,19 +26,6 @@ struct Geometry
 			Vec3F v0, v1, v2;
 		} triangle;
 	};
-};
-
-struct Material
-{
-	float IOR;
-	float roughness;
-	Vec3F specularColor;
-	Vec3F diffuseColor;
-};
-
-struct Object
-{
-	Geometry geom;
 	Material material;
 };
 
@@ -63,6 +58,16 @@ struct Mesh
 	std::vector<Vec3F> vertices;
 	std::vector<Vec3F> facades;
 };
+
+struct Box
+{
+	Vec3F lb, rt;
+	std::vector<Box> boxs;
+	int depth;
+	std::vector<Object> objects;
+};
+
+typedef std::vector<Box> Boxs;
 
 typedef std::vector<Object> Objects;
 

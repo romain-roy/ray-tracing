@@ -1,11 +1,7 @@
 void create_mesh(Mesh &mesh, Boxs &boxs)
 {
-	float x_min = mesh.vertices.at(0).x;
-	float y_min = mesh.vertices.at(0).y;
-	float z_min = mesh.vertices.at(0).z;
-	float x_max = mesh.vertices.at(0).x;
-	float y_max = mesh.vertices.at(0).y;
-	float z_max = mesh.vertices.at(0).z;
+	Vec3F min = {mesh.vertices.at(0).x, mesh.vertices.at(0).y, mesh.vertices.at(0).z};
+	Vec3F max = min;
 
 	/* Centrer l'objet */
 
@@ -17,18 +13,12 @@ void create_mesh(Mesh &mesh, Boxs &boxs)
 		somme_vertices = somme_vertices + mesh.vertices.at(i);
 		if (norm(mesh.vertices.at(i)) > norm_max)
 			norm_max = norm(mesh.vertices.at(i));
-		if (mesh.vertices.at(i).x < x_min)
-			x_min = mesh.vertices.at(i).x;
-		if (mesh.vertices.at(i).y < y_min)
-			y_min = mesh.vertices.at(i).y;
-		if (mesh.vertices.at(i).z < z_min)
-			z_min = mesh.vertices.at(i).z;
-		if (mesh.vertices.at(i).x > x_max)
-			x_max = mesh.vertices.at(i).x;
-		if (mesh.vertices.at(i).y > y_max)
-			y_max = mesh.vertices.at(i).y;
-		if (mesh.vertices.at(i).z > z_max)
-			z_max = mesh.vertices.at(i).z;
+		min.x = std::min(min.x, mesh.vertices.at(i).x);
+		min.y = std::min(min.y, mesh.vertices.at(i).y);
+		min.z = std::min(min.z, mesh.vertices.at(i).z);
+		max.x = std::max(max.x, mesh.vertices.at(i).x);
+		max.y = std::max(max.y, mesh.vertices.at(i).y);
+		max.z = std::max(max.z, mesh.vertices.at(i).z);
 	}
 	norm_max /= mesh.taille;
 
@@ -43,18 +33,10 @@ void create_mesh(Mesh &mesh, Boxs &boxs)
 
 	/* Création de la boîte englobante */
 
-	x_min = x_min / norm_max + offset.x;
-	y_min = y_min / norm_max + offset.y;
-	z_min = z_min / norm_max + offset.z;
-	x_max = x_max / norm_max + offset.x;
-	y_max = y_max / norm_max + offset.y;
-	z_max = z_max / norm_max + offset.z;
-
 	Box box;
-	box.lb = {x_min, y_min, z_min};
-	box.rt = {x_max, y_max, z_max};
+	box.lb = min / norm_max + offset;
+	box.rt =  max / norm_max + offset;
 	box.depth = 0;
-	Objects objects;
 
 	/* Création des triangles */
 
@@ -63,14 +45,13 @@ void create_mesh(Mesh &mesh, Boxs &boxs)
 	{
 		Object triangle;
 		triangle.material = mesh.material;
-		triangle.geom.type = TRIANGLE;
-		triangle.geom.triangle.v0 = mesh.vertices.at((int)mesh.facades.at(i).x) + offset;
-		triangle.geom.triangle.v1 = mesh.vertices.at((int)mesh.facades.at(i).y) + offset;
-		triangle.geom.triangle.v2 = mesh.vertices.at((int)mesh.facades.at(i).z) + offset;
-		objects.push_back(triangle);
+		triangle.type = TRIANGLE;
+		triangle.triangle.v0 = mesh.vertices.at((int)mesh.facades.at(i).x) + offset;
+		triangle.triangle.v1 = mesh.vertices.at((int)mesh.facades.at(i).y) + offset;
+		triangle.triangle.v2 = mesh.vertices.at((int)mesh.facades.at(i).z) + offset;
+		box.objects.push_back(triangle);
 	}
 
-	box.objects = objects;
 	boxs.push_back(box);
 }
 

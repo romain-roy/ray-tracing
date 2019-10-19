@@ -36,24 +36,24 @@ bool init_scene(Light &light, Boxs &boxs)
 
     Object sphere_white, sphere_nickel;
 
-    sphere_nickel.geom.type = SPHERE;
-    sphere_nickel.geom.sphere.position = {250.f, 200.f, 500.f};
-    sphere_nickel.geom.sphere.radius = 175.f;
+    sphere_nickel.type = SPHERE;
+    sphere_nickel.sphere.position = {250.f, 200.f, 500.f};
+    sphere_nickel.sphere.radius = 175.f;
     sphere_nickel.material = mat_nickel;
 
-    sphere_white.geom.type = SPHERE;
-    sphere_white.geom.sphere.position = {250.f, 750.f, 500.f};
-    sphere_white.geom.sphere.radius = 175.f;
+    sphere_white.type = SPHERE;
+    sphere_white.sphere.position = {250.f, 750.f, 500.f};
+    sphere_white.sphere.radius = 175.f;
     sphere_white.material = mat_white;
 
     Box box_sphere;
-    box_sphere.rt = {sphere_white.geom.sphere.position.x + sphere_white.geom.sphere.radius, sphere_white.geom.sphere.position.y + sphere_white.geom.sphere.radius, sphere_white.geom.sphere.position.z + sphere_white.geom.sphere.radius};
-    box_sphere.lb = {sphere_white.geom.sphere.position.x - sphere_white.geom.sphere.radius, sphere_white.geom.sphere.position.y - sphere_white.geom.sphere.radius, sphere_white.geom.sphere.position.z - sphere_white.geom.sphere.radius};
+    box_sphere.rt = {sphere_white.sphere.position.x + sphere_white.sphere.radius, sphere_white.sphere.position.y + sphere_white.sphere.radius, sphere_white.sphere.position.z + sphere_white.sphere.radius};
+    box_sphere.lb = {sphere_white.sphere.position.x - sphere_white.sphere.radius, sphere_white.sphere.position.y - sphere_white.sphere.radius, sphere_white.sphere.position.z - sphere_white.sphere.radius};
     box_sphere.depth = DEPTH_BOX; // pour ne pas qu'elle soit redécoupée
     box_sphere.objects.push_back(sphere_white);
     boxs.push_back(box_sphere);
 
-    /* Murs */
+    /* Murs de la Cornell Box */
 
     Object wall_back, wall_front, wall_up, wall_down, wall_right, wall_left;
 
@@ -64,16 +64,16 @@ bool init_scene(Light &light, Boxs &boxs)
     wall_right.material = mat_red;
     wall_left.material = mat_blue;
 
-    wall_back.geom.type = wall_up.geom.type = wall_right.geom.type = wall_left.geom.type = wall_down.geom.type = wall_front.geom.type = SPHERE;
+    wall_back.type = wall_up.type = wall_right.type = wall_left.type = wall_down.type = wall_front.type = SPHERE;
 
-    wall_back.geom.sphere.radius = wall_front.geom.sphere.radius = wall_up.geom.sphere.radius = wall_right.geom.sphere.radius = wall_left.geom.sphere.radius = wall_down.geom.sphere.radius = 130000.f;
+    wall_back.sphere.radius = wall_front.sphere.radius = wall_up.sphere.radius = wall_right.sphere.radius = wall_left.sphere.radius = wall_down.sphere.radius = 130000.f;
 
-    wall_back.geom.sphere.position = {500.f, 500.f, wall_back.geom.sphere.radius + 1001.f};
-    wall_front.geom.sphere.position = {500.f, 500.f, -wall_front.geom.sphere.radius - 1.f};
-    wall_up.geom.sphere.position = {500.f, wall_up.geom.sphere.radius + 1001.f, 500.f};
-    wall_down.geom.sphere.position = {500.f, -wall_down.geom.sphere.radius - 1.f, 500.f};
-    wall_right.geom.sphere.position = {wall_right.geom.sphere.radius + 1001.f, 500.f, 500.f};
-    wall_left.geom.sphere.position = {-wall_left.geom.sphere.radius - 1.f, 500.f, 500.f};
+    wall_back.sphere.position = {500.f, 500.f, wall_back.sphere.radius + 1001.f};
+    wall_front.sphere.position = {500.f, 500.f, -wall_front.sphere.radius - 1.f};
+    wall_up.sphere.position = {500.f, wall_up.sphere.radius + 1001.f, 500.f};
+    wall_down.sphere.position = {500.f, -wall_down.sphere.radius - 1.f, 500.f};
+    wall_right.sphere.position = {wall_right.sphere.radius + 1001.f, 500.f, 500.f};
+    wall_left.sphere.position = {-wall_left.sphere.radius - 1.f, 500.f, 500.f};
 
     /* Lumière */
 

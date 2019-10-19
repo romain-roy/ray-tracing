@@ -1,9 +1,9 @@
 bool intersect_sphere(Ray &ray, Object &object, Intersection &intersection)
 {
-	Vec3F pos = ray.origin - object.geom.sphere.position;
+	Vec3F pos = ray.origin - object.sphere.position;
 	float a = 1.f; // dot2(ray.direction);
 	float b = 2.f * dot(ray.direction, pos);
-	float c = dot2(pos) - object.geom.sphere.radius * object.geom.sphere.radius;
+	float c = dot2(pos) - object.sphere.radius * object.sphere.radius;
 	float delta = b * b - 4.f * a * c;
 	if (delta <= 0.f)
 	{
@@ -18,7 +18,7 @@ bool intersect_sphere(Ray &ray, Object &object, Intersection &intersection)
 	if (intersection.distance > 0.f)
 	{
 		intersection.position = ray.origin + ray.direction * intersection.distance;
-		intersection.normale = normalize(intersection.position - object.geom.sphere.position);
+		intersection.normale = normalize(intersection.position - object.sphere.position);
 		intersection.object = object;
 		return true;
 	}
@@ -30,8 +30,8 @@ bool intersect_triangle(Ray &ray, Object &object, Intersection &intersection)
 	Vec3F edge1, edge2, h, s, q;
 	float a, f, u, v;
 	const float epsilon = 0.0000001f;
-	edge1 = object.geom.triangle.v1 - object.geom.triangle.v0;
-	edge2 = object.geom.triangle.v2 - object.geom.triangle.v0;
+	edge1 = object.triangle.v1 - object.triangle.v0;
+	edge2 = object.triangle.v2 - object.triangle.v0;
 	h = cross(ray.direction, edge2);
 	a = dot(edge1, h);
 	if (a > -epsilon && a < epsilon)
@@ -39,7 +39,7 @@ bool intersect_triangle(Ray &ray, Object &object, Intersection &intersection)
 		return false;
 	}
 	f = 1.f / a;
-	s = ray.origin - object.geom.triangle.v0;
+	s = ray.origin - object.triangle.v0;
 	u = f * (dot(s, h));
 	if (u < 0.f || u > 1.f)
 	{
@@ -99,7 +99,7 @@ bool intersect_scene(Ray &ray, Box &box, Intersection &intersection)
 	for (unsigned int k = 0; k < object_count; k++)
 	{
 		Object obj = box.objects.at(k);
-		switch (obj.geom.type)
+		switch (obj.type)
 		{
 		case TRIANGLE:
 			if (intersect_triangle(ray, obj, intersection))
