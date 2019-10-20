@@ -10,8 +10,9 @@ int main()
 
     Light light;
     Boxs boxs;
+	Objects objects;
 
-    if (!init_scene(light, boxs))
+    if (!init_scene(light, boxs, objects))
         return 1;
 
     std::time_t t1 = std::time(0);
@@ -20,7 +21,7 @@ int main()
 
     printf("Rendering image... 0 %%\r");
 
-    if (render_image(light, boxs))
+    if (render_image(light, boxs, objects))
     {
         std::time_t t2 = std::time(0);
         std::tm *finish = std::localtime(&t2);

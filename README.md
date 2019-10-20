@@ -8,6 +8,6 @@ Moteur de rendu par lancer de rayon.
 
 ![Box](/images/sphere_dino.png)
 
-##### Avec BVH (500 rayons de lumières, ~ 1 minute de rendu)
+##### Avec BVH (100 rayons de lumières, ~ 1 minute de rendu)
 
-![Meshs](/images/meshs_colors.png)
+![Box](/images/spheres_meshs.png)

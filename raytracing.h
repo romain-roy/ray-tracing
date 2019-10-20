@@ -16,7 +16,7 @@
 /* Ray tracing settings */
 
 #define MAX_DEPTH 0 // Nombre de rebonds des rayons de lumière
-#define NB_LIGHTS 1 // Nombre de rayons de lumière par lampe
+#define NB_LIGHTS 100 // Nombre de rayons de lumière par lampe
 
 const float acne = 0.01f;
 
@@ -26,23 +26,25 @@ std::random_device device;
 std::mt19937 rng(device());
 std::uniform_int_distribution<std::mt19937::result_type> aleatoire(0, 500);
 
-Vec3F trace_ray(Light &light, Ray &ray, Box &box)
+Vec3F trace_ray_objects(Light &light, Ray &ray, Objects &objects, float &distance)
 {
 	Vec3F color, ret;
 	color = ret = {0.f, 0.f, 0.f};
 	Intersection intersection;
-	if (intersect_scene(ray, box, intersection))
+	if (intersect_scene(ray, objects, intersection))
 	{
+		if (distance == INFINITY)
+			distance = intersection.distance;
 		for (int k = 0; k < NB_LIGHTS; k++)
 		{
 			light.position.x = 250.f + (float)aleatoire(device);
-			light.position.y = 250.f + (float)aleatoire(device);
+			light.position.z = 250.f + (float)aleatoire(device);
 			intersection.position = intersection.position + (intersection.normale * acne);
 			Ray ray_shadow;
 			ray_shadow.origin = intersection.position;
 			ray_shadow.direction = normalize(light.position - intersection.position);
 			Intersection inter_shadow;
-			if (!intersect_scene(ray_shadow, box, inter_shadow) || coord_out_of_scene(inter_shadow.position))
+			if (!intersect_scene(ray_shadow, objects, inter_shadow) || coord_out_of_scene(inter_shadow.position))
 			{
 				Vec3F inv = ray.direction * -1.f;
 				color = color + (shade(intersection.normale, inv, ray_shadow.direction, light.color, intersection.object.material) / (float)NB_LIGHTS * 20.f);
@@ -56,7 +58,7 @@ Vec3F trace_ray(Light &light, Ray &ray, Box &box)
 			ray_reflect.origin = intersection.position + dir_ray_reflect * acne;
 			ray_reflect.direction = dir_ray_reflect;
 			ray_reflect.depth = ray.depth + 1;
-			Vec3F color_reflect = trace_ray(light, ray_reflect, box);
+			Vec3F color_reflect = trace_ray_objects(light, ray_reflect, objects, distance);
 			ret = color + intersection.object.material.specularColor * RDM_Fresnel(dot(ray_reflect.direction, intersection.normale), 1.f, intersection.object.material.IOR) * color_reflect;
 		}
 		else
@@ -71,7 +73,7 @@ Vec3F trace_ray(Light &light, Ray &ray, Box &box)
 	return ret;
 }
 
-Vec3F trace_ray_boxs(Light &light, Ray &ray, Boxs &boxs)
+Vec3F trace_ray_boxs(Light &light, Ray &ray, Boxs &boxs, float &distance)
 {
 	Vec3F color = {0.f, 0.f, 0.f};
 	size_t boxs_count = boxs.size();
@@ -82,22 +84,33 @@ Vec3F trace_ray_boxs(Light &light, Ray &ray, Boxs &boxs)
 		{
 			if (boxs.at(b).depth < DEPTH_BOX)
 			{
-				Vec3F new_color = trace_ray_boxs(light, ray, boxs.at(b).boxs);
-				if (color < new_color)
-					color = new_color;
+				Vec3F color_boxs = trace_ray_boxs(light, ray, boxs.at(b).boxs, distance);
+				if (color < color_boxs)
+					color = color_boxs;
 			}
 			else
 			{
-				Vec3F new_color = trace_ray(light, ray, boxs.at(b));
-				if (color < new_color)
-					color = new_color;
+				Vec3F color_objects = trace_ray_objects(light, ray, boxs.at(b).objects, distance);
+				if (color < color_objects)
+					color = color_objects;
 			}
 		}
 	}
 	return color;
 }
 
-bool render_image(Light &light, Boxs &boxs)
+Vec3F trace_ray(Light &light, Ray &ray, Boxs &boxs, Objects &objects)
+{
+	Vec3F color = {0.f, 0.f, 0.f};
+	float distance_objects = INFINITY, distance_boxs = INFINITY;
+	color = trace_ray_objects(light, ray, objects, distance_objects);
+	Vec3F color_boxs = trace_ray_boxs(light, ray, boxs, distance_boxs);
+	if (distance_boxs < distance_objects)
+		color = color_boxs;
+	return color;
+}
+
+bool render_image(Light &light, Boxs &boxs, Objects &objects)
 {
 	/* Initialisation de l'image */
 
@@ -121,7 +134,7 @@ bool render_image(Light &light, Boxs &boxs)
 			ray.direction = normalize(ray.origin - camera);
 			ray.depth = 0;
 
-			Vec3F color = trace_ray_boxs(light, ray, boxs);
+			Vec3F color = trace_ray(light, ray, boxs, objects);
 
 			RGBQUAD colorPixel;
 			colorPixel.rgbRed = clamp_color(color.x);

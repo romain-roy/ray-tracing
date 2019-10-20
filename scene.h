@@ -1,7 +1,7 @@
 #include "bvh.h"
 #include "meshs.h"
 
-bool init_scene(Light &light, Boxs &boxs)
+bool init_scene(Light &light, Boxs &boxs, Objects &objects)
 {
     /* Matériaux */
 
@@ -37,21 +37,28 @@ bool init_scene(Light &light, Boxs &boxs)
     Object sphere_white, sphere_nickel;
 
     sphere_nickel.type = SPHERE;
-    sphere_nickel.sphere.position = {250.f, 200.f, 500.f};
+    sphere_nickel.sphere.position = {200.f, 700.f, 500.f};
     sphere_nickel.sphere.radius = 175.f;
-    sphere_nickel.material = mat_nickel;
+    sphere_nickel.material = mat_green;
 
     sphere_white.type = SPHERE;
-    sphere_white.sphere.position = {250.f, 750.f, 500.f};
-    sphere_white.sphere.radius = 175.f;
+    sphere_white.sphere.position = {350.f, 475.f, 300.f};
+    sphere_white.sphere.radius = 100.f;
     sphere_white.material = mat_white;
 
-    Box box_sphere;
-    box_sphere.rt = {sphere_white.sphere.position.x + sphere_white.sphere.radius, sphere_white.sphere.position.y + sphere_white.sphere.radius, sphere_white.sphere.position.z + sphere_white.sphere.radius};
-    box_sphere.lb = {sphere_white.sphere.position.x - sphere_white.sphere.radius, sphere_white.sphere.position.y - sphere_white.sphere.radius, sphere_white.sphere.position.z - sphere_white.sphere.radius};
-    box_sphere.depth = DEPTH_BOX; // pour ne pas qu'elle soit redécoupée
-    box_sphere.objects.push_back(sphere_white);
-    boxs.push_back(box_sphere);
+    Box box_sphere_nickel;
+    box_sphere_nickel.rt = {sphere_nickel.sphere.position.x + sphere_nickel.sphere.radius, sphere_nickel.sphere.position.y + sphere_nickel.sphere.radius, sphere_nickel.sphere.position.z + sphere_nickel.sphere.radius};
+    box_sphere_nickel.lb = {sphere_nickel.sphere.position.x - sphere_nickel.sphere.radius, sphere_nickel.sphere.position.y - sphere_nickel.sphere.radius, sphere_nickel.sphere.position.z - sphere_nickel.sphere.radius};
+    box_sphere_nickel.depth = DEPTH_BOX; // pour ne pas qu'elle soit redécoupée
+    box_sphere_nickel.objects.push_back(sphere_nickel);
+    boxs.push_back(box_sphere_nickel);
+
+	Box box_sphere_white;
+    box_sphere_white.rt = {sphere_white.sphere.position.x + sphere_white.sphere.radius, sphere_white.sphere.position.y + sphere_white.sphere.radius, sphere_white.sphere.position.z + sphere_white.sphere.radius};
+    box_sphere_white.lb = {sphere_white.sphere.position.x - sphere_white.sphere.radius, sphere_white.sphere.position.y - sphere_white.sphere.radius, sphere_white.sphere.position.z - sphere_white.sphere.radius};
+    box_sphere_white.depth = DEPTH_BOX; // pour ne pas qu'elle soit redécoupée
+    box_sphere_white.objects.push_back(sphere_white);
+    boxs.push_back(box_sphere_white);
 
     /* Murs de la Cornell Box */
 
@@ -75,20 +82,26 @@ bool init_scene(Light &light, Boxs &boxs)
     wall_right.sphere.position = {wall_right.sphere.radius + 1001.f, 500.f, 500.f};
     wall_left.sphere.position = {-wall_left.sphere.radius - 1.f, 500.f, 500.f};
 
+	objects.push_back(wall_front);
+	objects.push_back(wall_up);
+	objects.push_back(wall_down);
+	objects.push_back(wall_right);
+	objects.push_back(wall_left);
+
     /* Lumière */
 
-    light.position = {250.f, 250.f, 800.f};
+    light.position = {250.f, 950.f, 250.f};
     light.color = {255.f, 255.f, 255.f};
 
     /* Meshs */
 
     Mesh bunny, dino;
 
-    bunny.position = {725.f, 725.f, 500.f};
+    bunny.position = {675.f, 650.f, 500.f};
     bunny.taille = 500.f;
     bunny.material = mat_red;
 
-    dino.position = {575.f, 250.f, 500.f};
+    dino.position = {625.f, 200.f, 650.f};
     dino.taille = 500.f;
     dino.material = mat_blue;
 
