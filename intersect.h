@@ -92,22 +92,23 @@ bool intersect_box(Ray &ray, Box &box, Intersection &intersection)
 	return true;
 }
 
-bool intersect_scene(Ray &ray, Objects &objects, Intersection &intersection)
+bool intersect_scene(Ray &ray, Box &box, Intersection &intersection)
 {
 	Intersections intersections;
-	size_t object_count = objects.size();
+	size_t object_count = box.objects.size();
 	for (unsigned int k = 0; k < object_count; k++)
 	{
-		switch (objects.at(k).type)
+		Object obj = box.objects.at(k);
+		switch (obj.type)
 		{
 		case TRIANGLE:
-			if (intersect_triangle(ray, objects.at(k), intersection))
+			if (intersect_triangle(ray, obj, intersection))
 			{
 				intersections.push_back(intersection);
 			}
 			break;
 		case SPHERE:
-			if (intersect_sphere(ray, objects.at(k), intersection))
+			if (intersect_sphere(ray, obj, intersection))
 			{
 				intersections.push_back(intersection);
 			}
