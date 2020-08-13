@@ -1,6 +1,6 @@
 # Ray tracing
 
-Moteur de rendu par lancer de rayon.
+Rendu par lancer de rayon.
 
 ![Spheres](/images/spheres.png)
 
